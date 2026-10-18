@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import * as k from "../../kit/iso-kit.mjs";
 import * as b from "../../kit/brick.mjs";
 import * as l from "../../kit/lesson.mjs";
+import { auditOrExit } from "../../kit/lego-audit.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const { STUD, PLATE } = b;
@@ -48,7 +49,7 @@ const DOWN_Y = 21.4 * STUD;
 const HOUSE = { x: 42, y: 10, w: 12, d: 8 };
 const TAP_X = 48 * STUD;
 const WALL_Y = HOUSE.y + HOUSE.d;
-const TAP_Z = 9 * PLATE;
+const TAP_Z = 8 * PLATE;
 const BUCKET = { x: 47, y: 18.6, h: 3 };
 const BUCKET_C = [(BUCKET.x + 1) * STUD, (BUCKET.y + 1) * STUD];
 
@@ -76,13 +77,13 @@ tree(37, 2, 1);
 tree(40, 6, 0.8);
 tree(54, 3, 1);
 tree(17, 2, 0.8);
-[[35, 13, "red"], [38, 11, "yellow"], [27, 19, "red"], [29, 17, "yellow"], [53, 20, "red"], [41, 20, "yellow"], [20, 18, "red"]].forEach(([x, y, color]) => add(0, b.round({ x, y, z: 1, w: 1, h: 1, color })));
+[[35, 13, "red"], [38, 11, "yellow"], [27, 19, "red"], [27, 20, "yellow"], [53, 20, "red"], [41, 20, "yellow"], [20, 18, "red"]].forEach(([x, y, color]) => add(0, b.round({ x, y, z: 1, w: 1, h: 1, color })));
 
 // Step 1: the mountain with snow on top, a cloud, the stream down its steps, the reservoir and its dam.
 MOUNTAIN.forEach((layer, index) => add(1, b.brick({ ...layer, z: 1 + index * LAYER_H, h: index === 3 ? 3 : LAYER_H, color: layer.color })));
 const layerTop = (index) => (1 + (index + 1) * LAYER_H) * PLATE;
-[[3, 2, 3], [5.5, 1.2, 3.6], [8.2, 2.2, 3], [6, 3.4, 2.6]].forEach(([x, y, w]) => add(1, b.round({ x, y, z: 37, w, h: 3, color: "white", studs: false, id: "cloud" })));
-add(1, b.plate({ x: 4, y: 2.4, z: 36, w: 5, d: 2.4, color: "white", studs: false, id: "cloud" }));
+[[3, 2, 3], [5.5, 1.2, 3.6], [8.2, 2.2, 3], [6, 3.4, 2.6]].forEach(([x, y, w]) => add(1, b.round({ x, y, z: 37, w, h: 3, color: "white", studs: false, id: "cloud", float: true, overlaps: true, offGrid: true })));
+add(1, b.plate({ x: 4, y: 2.4, z: 36, w: 5, d: 2.4, color: "white", studs: false, id: "cloud", float: true, overlaps: true, offGrid: true }));
 [[6, 8, 0], [4, 6, 1], [2, 4, 2]].forEach(([y1, y0, index]) =>
   add(1, b.custom({ faces: b.boxFaces((STREAM_X - 0.7) * STUD, y0 * STUD, layerTop(index), (STREAM_X + 0.7) * STUD, y1 * STUD, layerTop(index) + 0.4), color: "#3d8fd6", trans: true })),
 );
@@ -107,7 +108,7 @@ add(3, pipeX((FILTER.x + FILTER.w) * STUD - 1, RISE_X * STUD, LINE_Y * STUD, PIP
 add(3, b.round({ x: RISE_X - 0.5, y: LINE_Y - 0.5, z: 1, w: 1, h: 3, color: "blue", studs: false, steps: 16 }));
 add(3, pipeY((LINE_Y + 0.5) * STUD, PUMP.y * STUD + 1, RISE_X * STUD, PIPE_Z));
 add(3, b.brick({ ...PUMP, z: 1, h: 6, color: "blue", studs: false, id: "pump" }));
-add(3, b.round({ x: PUMP.x + 0.25, y: PUMP.y + 0.25, z: 7, w: 1.5, h: 3, color: "dark-gray", id: "pump" }));
+add(3, b.round({ x: PUMP.x, y: PUMP.y, z: 7, w: 2, h: 3, color: "dark-gray", id: "pump" }));
 add(3, pipeX((PUMP.x + PUMP.w) * STUD - 1, TOWER[0] * STUD, PUMP_LINE * STUD, PIPE_Z));
 add(3, pipeUp(TOWER[0] * STUD, TOWER[1] * STUD, PIPE_Z - PIPE_R, TANK.z0));
 [[-1.5, -1.5], [1.5, -1.5], [-1.5, 1.5], [1.5, 1.5]].forEach(([dx, dy]) => {
@@ -117,8 +118,8 @@ const [tx, ty] = [TOWER[0] * STUD, TOWER[1] * STUD];
 add(3, b.custom({ faces: b.cylinderFaces(tx, ty, TANK.r, TANK.z0, TANK.z0 + 3 * PLATE, 32), color: "white" }));
 add(3, b.custom({ faces: b.cylinderFaces(tx, ty, TANK.r, TANK.z0 + 3 * PLATE, TANK.z0 + 6 * PLATE, 32), color: "azure" }));
 add(3, b.custom({ faces: b.cylinderFaces(tx, ty, TANK.r, TANK.z0 + 6 * PLATE, TANK.z1, 32), color: "white" }));
-add(3, b.custom({ faces: b.frustumFaces(tx, ty, TANK.r + 1.5, TANK.z1, 4, TANK.z1 + 11, 32), color: "dark-gray" }));
-add(3, b.round({ x: TOWER[0] - 0.5, y: TOWER[1] - 0.5, z: (TANK.z1 + 11) / PLATE, w: 1, h: 1, color: "dark-gray", steps: 16 }));
+add(3, b.custom({ faces: b.frustumFaces(tx, ty, TANK.r + 1.5, TANK.z1, 4, TANK.z1 + 3 * PLATE, 32), color: "dark-gray" }));
+add(3, b.round({ x: TOWER[0] - 0.5, y: TOWER[1] - 0.5, z: TANK.z1 / PLATE + 3, w: 1, h: 1, color: "dark-gray", steps: 16 }));
 add(3, pipeY(ty + TANK.r - 3, DOWN_Y + PIPE_R, tx, TANK.z0 + 4, "blue"));
 add(3, pipeUp(tx, DOWN_Y, GROUND, TANK.z0 + 4 + PIPE_R));
 
@@ -126,22 +127,24 @@ add(3, pipeUp(tx, DOWN_Y, GROUND, TANK.z0 + 4 + PIPE_R));
 for (let course = 0; course < 3; course++) add(4, b.brick({ ...HOUSE, z: 1 + course * 3, h: 3, color: "white", studs: false }));
 const roofZ = 10 * PLATE;
 add(4, b.custom({ faces: b.extrudeFaces([[(HOUSE.y - 0.5) * STUD, roofZ], [(WALL_Y + 0.5) * STUD, roofZ], [(HOUSE.y + HOUSE.d / 2) * STUD, roofZ + 30]], "x", (HOUSE.x - 0.4) * STUD, (HOUSE.x + HOUSE.w + 0.4) * STUD), color: "red" }));
-add(4, b.custom({ faces: b.boxFaces(52 * STUD, 12 * STUD, roofZ + 10, 53.4 * STUD, 13.4 * STUD, roofZ + 32), color: "dark-gray" }));
+add(4, b.custom({ faces: b.boxFaces(52 * STUD, 12 * STUD, roofZ + 10, 53.4 * STUD, 13.4 * STUD, roofZ + 32), color: "dark-gray", overlaps: true }));
 const onWall = (x0, x1, z0, z1, color, depth = 0.6) => b.custom({ faces: b.boxFaces(x0 * STUD, WALL_Y * STUD - 0.1, z0 * PLATE, x1 * STUD, WALL_Y * STUD + depth, z1 * PLATE), color });
-add(4, onWall(43, 45, 1, 8, "blue"));
+add(4, onWall(43, 45, 2, 8, "blue"));
 add(4, onWall(50, 53, 4, 8.5, "#9fd8f0"));
 add(4, onWall(50, 53, 3.6, 4, "white", 1.4));
 add(4, onWall(45.8, 46.8, 5, 8, "#9fd8f0"));
 add(4, pipeUp(TAP_X, WALL_Y * STUD + 2, GROUND, TAP_Z + 2, "blue", 1.6));
-add(4, b.custom({ faces: b.boxFaces(TAP_X - 4, WALL_Y * STUD + 0.4, 4.6 * PLATE, TAP_X + 4, WALL_Y * STUD + 4.6, 6.8 * PLATE), color: "white" }));
-for (let y = WALL_Y; y < DEEP; y++) add(4, b.tile({ x: 43, y, w: 2, d: 1, h: 1.4, z: 1, color: "tan" }));
+add(4, b.custom({ faces: b.boxFaces(TAP_X - 4, WALL_Y * STUD + 0.4, 4.4 * PLATE, TAP_X + 4, WALL_Y * STUD + 4.6, 6.2 * PLATE), color: "white", overlaps: true }));
+for (let y = WALL_Y; y < DEEP; y++) add(4, b.tile({ x: 43, y, w: 2, d: 1, z: 1, color: "tan" }));
 add(4, b.minifig({ x: 51.6, y: 20.4, z: 1, torso: "yellow", legs: "dark-gray", hair: "black" }));
 
 // Step 5: the tap with its red handle, and a bucket under it.
 add(5, pipeY(WALL_Y * STUD + 2, WALL_Y * STUD + 9, TAP_X, TAP_Z, "light-gray", 1.6));
-add(5, b.custom({ faces: b.cylinderFaces(TAP_X, WALL_Y * STUD + 8.4, 1.4, TAP_Z - 5, TAP_Z, 12), color: "light-gray", id: "tap" }));
-add(5, b.round({ x: TAP_X / STUD - 0.5, y: WALL_Y + 0.4, z: TAP_Z / PLATE + 0.5, w: 1, h: 1, color: "red", id: "tap", steps: 16 }));
-add(5, b.round({ x: BUCKET.x, y: BUCKET.y, z: 1, w: 2, h: BUCKET.h, color: "orange", studs: false, id: "bucket" }));
+add(5, b.custom({ faces: b.cylinderFaces(TAP_X, WALL_Y * STUD + 8.4, 1.4, TAP_Z - 5, TAP_Z, 12), color: "light-gray", id: "tap", overlaps: true }));
+add(5, b.round({ x: TAP_X / STUD - 0.5, y: WALL_Y + 0.4, z: TAP_Z / PLATE + 0.5, w: 1, h: 1, color: "red", id: "tap", steps: 16, offGrid: true, overlaps: true }));
+add(5, b.round({ x: BUCKET.x, y: BUCKET.y, z: 1, w: 2, h: BUCKET.h, color: "orange", studs: false, id: "bucket", offGrid: true }));
+
+auditOrExit(pieces);
 
 const P = k.fitProjection(
   [

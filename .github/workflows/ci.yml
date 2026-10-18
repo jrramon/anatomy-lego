@@ -33,10 +33,10 @@ jobs:
           NODE_PATH="$test_deps/node_modules" node --test scripts/*.test.mjs
 
       - name: Farola (LEGO)
-        run: node examples/farola/build.mjs
+        run: node examples/farola/build.mjs --audit
 
       - name: Agua del grifo (LEGO)
-        run: node examples/agua/build.mjs
+        run: node examples/agua/build.mjs --audit
 
       - name: Dial indicator
         run: |

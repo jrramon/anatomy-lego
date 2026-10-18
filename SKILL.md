@@ -69,6 +69,36 @@ Las medidas son las de LEGO de verdad, en milímetros: un *stud* mide 8 de ancho
 
 Cualquier pieza acepta `step`, el paso en que aparece, e `id`, que pasa a `data-id` y sirve para clics y estilos. Colores: `red`, `yellow`, `blue`, `green`, `bright-green`, `lime`, `white`, `black`, `light-gray`, `dark-gray`, `tan`, `dark-tan`, `brown`, `orange`, `azure`, `skin`, `trans-yellow` y `trans-clear`, o cualquier `#rrggbb`. El sombreado es el de los folletos de instrucciones: arriba claro, la cara +y media y la cara +x oscura, con contorno fino.
 
+### `kit/lego-round.mjs`: piezas redondas
+
+| Función | Qué hace |
+|---|---|
+| `dome({ x, y, z, w })` | Cúpula: collar y media esfera (2×2, 4×4). |
+| `cone({ x, y, z, w, h, top })` | Cono con *stud* en la punta. |
+| `barrel({ x, y, z, w, h })` | Barril abombado. |
+| `ball({ at, r })` | Bola en milímetros: la Tierra, un planeta, una pelota. |
+| `dish({ x, y, z, w, depth, up })` | Plato: boca arriba (antena, cuenco) o boca abajo (pantalla, paraguas). |
+| `wheel({ at, axis: "x" \| "y", r, width, tire, rim })` | Rueda con neumático y llanta hundida, sobre un eje horizontal. |
+| `turned({ profile, at, axis, color })` | Cualquier pieza de revolución. El perfil es `[t, r]` y se recorre dejando el sólido a la izquierda: del eje hacia fuera por abajo, subiendo por fuera y de vuelta al eje por arriba. |
+
+### `kit/lego-tube.mjs`: mangueras, tubos y cables
+
+| Función | Qué hace |
+|---|---|
+| `hose({ points, r, color, ribbed, pitch })` | Manguera como piezas de escena, en trozos que se ordenan entre los ladrillos: hay que expandirla con `...hose(…)` en la lista. `ribbed` le pone anillos, como un tubo Technic. |
+| `tubeSvg(points, P, { r, color })` | El mismo tubo como un solo dibujo, para ponerlo por encima de la escena (cables al aire). |
+| `curve(points)`, `sag(from, to, drop)`, `resample(points, step)` | Curva suave entre puntos, cable que cuelga y puntos a distancia regular. |
+
+### `kit/lego-audit.mjs`: la auditoría
+
+`auditOrExit(pieces)`, llamado antes de `fitProjection`, revisa las piezas con `node build.mjs --audit`:
+- **overlap:** dos piezas se atraviesan.
+- **floating:** una pieza no toca nada que la sujete.
+- **early:** solo la sujetan piezas de un paso posterior.
+- **grid:** un ladrillo o una pieza redonda queda fuera de la rejilla de *studs* y placas.
+
+Para que una excepción sea aceptable hay que declararla en la pieza: `overlaps: true` (un accesorio que se mete en otro; los tubos ya lo traen), `float: true` (una nube) u `offGrid: true` (un cubo suelto, un asa).
+
 ### `kit/lesson.mjs`: la página
 
 | Función | Qué hace |
@@ -116,6 +146,7 @@ Lee cada PNG que generes:
 - **Cada paso**: `node scripts/capture.mjs "file://…/leccion.html?paso=N" --out pasoN.png --width 1200 --wait 4000`. ¿Está a la vista la pieza nueva de ese paso? ¿Se entiende sin leer?
 - **La interacción**: con `scripts/drive.mjs`, recorre los pasos con `["click", "[data-action=\"next\"]"]`, pulsa los botones propios y comprueba el `[data-readout]` con `["eval", …]`. Cada causa tiene que producir su efecto, y deshacerla tiene que deshacerlo. Volver atrás tiene que esconder las piezas de los pasos posteriores.
 - **De día y de noche**, si la lección usa el cielo.
+- **La auditoría a cero**: `node build.mjs --audit` tiene que terminar en `auditoría superada`. Arregla la geometría; marca una excepción solo cuando de verdad lo sea.
 - La consola tiene que salir limpia (`console: clean`).
 - La prueba final: imagina que se lo cuentas a un niño de cuatro años. ¿Sabe dónde mirar en cada paso? ¿Reconoce cada cosa? ¿Puede contestar la pregunta mirando el dibujo?
 

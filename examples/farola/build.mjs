@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import * as k from "../../kit/iso-kit.mjs";
 import * as b from "../../kit/brick.mjs";
 import * as l from "../../kit/lesson.mjs";
+import { auditOrExit } from "../../kit/lego-audit.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const { STUD, PLATE, GAP } = b;
@@ -25,7 +26,7 @@ const ROTOR_Y = 15 * STUD;
 const BLADE = 52;
 const PYLONS = [10, 16];
 const ARM_Y = [9.5, 14.5];
-const INSULATOR_TOP = 34 * PLATE;
+const INSULATOR_TOP = 33 * PLATE;
 const YARD = { x: 22, y: 9, w: 7, d: 6 };
 const TRANSFORMER = { x: 23, y: 9, w: 3, d: 6 };
 const TAPS = ARM_Y.map((y) => [23.5 * STUD, y * STUD, 14 * PLATE]);
@@ -92,7 +93,7 @@ const pylon = (cx) => {
   for (let level = 0; level < 8; level++) add(2, b.round({ x: cx - 1, y: 11, z: 2 + level * 3, w: 2, h: 3, color: "light-gray", studs: false }));
   add(2, b.plate({ x: cx - 0.5, y: 9, z: 26, w: 1, d: 6, color: "dark-gray", studs: false }));
   ARM_Y.forEach((y) => {
-    for (let level = 0; level < 3; level++) add(2, b.round({ x: cx - 0.5, y: y - 0.5, z: 27 + level * 2.33, w: 1, h: 2.33, color: "white", studs: false, steps: 16 }));
+    for (let level = 0; level < 3; level++) add(2, b.round({ x: cx - 0.5, y: y - 0.5, z: 27 + level * 2, w: 1, h: 2, color: "white", studs: false, steps: 16 }));
   });
 };
 PYLONS.forEach(pylon);
@@ -103,7 +104,7 @@ add(3, b.plate({ ...YARD, z: 1, color: "light-gray" }));
 add(3, b.brick({ ...TRANSFORMER, z: 2, h: 6, color: "dark-gray", studs: false }));
 for (let rib = 0; rib < 5; rib++) {
   const y = (TRANSFORMER.y + 0.7 + rib * 1.1) * STUD;
-  add(3, b.custom({ faces: b.boxFaces((TRANSFORMER.x + TRANSFORMER.w) * STUD, y, 2.6 * PLATE, (TRANSFORMER.x + TRANSFORMER.w + 0.5) * STUD, y + 2.4, 7.4 * PLATE), color: "dark-gray" }));
+  add(3, b.custom({ faces: b.boxFaces((TRANSFORMER.x + TRANSFORMER.w) * STUD - GAP, y, 2.6 * PLATE, (TRANSFORMER.x + TRANSFORMER.w + 0.5) * STUD, y + 2.4, 7.4 * PLATE), color: "dark-gray" }));
 }
 ARM_Y.forEach((y) => {
   for (let level = 0; level < 3; level++) add(3, b.round({ x: 23, y: y - 0.5, z: 8 + level * 2, w: 1, h: 2, color: "white", studs: false, steps: 16 }));
@@ -133,6 +134,8 @@ const lamp = (cx) => {
 };
 LAMPS.forEach(lamp);
 add(4, b.minifig({ x: 46, y: 16.6, z: SIDEWALK_H, torso: "red", legs: "blue", hair: "brown" }));
+
+auditOrExit(pieces);
 
 const P = k.fitProjection(
   [

@@ -187,7 +187,10 @@ export function brick({ x, y, z = 0, w = 1, d = 1, h = 3, color, studs = true, t
   const tops = [];
   if (studs) for (let i = 0; i < w; i++) for (let j = 0; j < d; j++) tops.push([(x + i + 0.5) * STUD, (y + j + 0.5) * STUD, z1]);
   return {
+    kind: "brick",
     ...rest,
+    color,
+    grid: { x, y, z, w, d, h },
     box: boxOf(x0, y0, z0, x1, y1, z1),
     svg: (P) => solidSvg(boxFaces(x0, y0, z0, x1, y1, z1), color, P, { trans }) + studsSvg(tops, color, P),
   };
@@ -201,7 +204,11 @@ export function round({ x, y, z = 0, w = 1, h = 3, color, studs = true, trans = 
   const z0 = z * PLATE;
   const z1 = (z + h) * PLATE;
   return {
+    kind: "round",
     ...rest,
+    color,
+    grid: { x, y, z, w, d: w, h },
+    circle: [cx, cy, r],
     box: boxOf(cx - r, cy - r, z0, cx + r, cy + r, z1),
     svg: (P) => solidSvg(cylinderFaces(cx, cy, r, z0, z1, steps), color, P, { trans, glow }) + (studs ? studsSvg([[cx, cy, z1]], color, P) : ""),
   };
@@ -212,21 +219,25 @@ export function custom({ faces, color, trans = false, glow = false, extra, ...re
   const lo = [0, 1, 2].map((axis) => Math.min(...all.map((p) => p[axis])));
   const hi = [0, 1, 2].map((axis) => Math.max(...all.map((p) => p[axis])));
   return {
+    kind: "custom",
     ...rest,
+    color,
     box: rest.box ?? boxOf(lo[0], lo[1], lo[2], hi[0], hi[1], hi[2]),
     svg: (P) => solidSvg(faces, color, P, { trans, glow }) + (extra ? extra(P) : ""),
   };
 }
 // A straight pipe in millimetres, along "x", "y" or "z" from `from` to `to`, through the point
 // `at` = the other two coordinates ([y, z] for "x", [x, z] for "y", [x, y] for "z").
+// Pipes run into what they connect, so the audit lets them overlap other pieces.
 export function pipe({ axis, from, to, at: [a, c], r = 2.4, color = "blue", steps = 14, ...rest }) {
   const faces = axis === "z" ? cylinderFaces(a, c, r, from, to, steps) : extrudeFaces(circleOf(a, c, r, steps), axis, from, to);
-  return custom({ faces, color, ...rest });
+  return custom({ faces, color, kind: "pipe", overlaps: true, ...rest });
 }
 // Several solids that move and sort as one piece (a minifigure, a lamp head), listed back to front.
 export function group({ parts, box, ...rest }) {
   const boxes = parts.map((part) => part.box);
   return {
+    kind: "group",
     ...rest,
     box: box ?? boxOf(Math.min(...boxes.map((b) => b.x0)), Math.min(...boxes.map((b) => b.y0)), Math.min(...boxes.map((b) => b.z0)), Math.max(...boxes.map((b) => b.x1)), Math.max(...boxes.map((b) => b.y1)), Math.max(...boxes.map((b) => b.z1))),
     svg: (P) => parts.map((part) => part.svg(P)).join(""),
@@ -260,6 +271,7 @@ export function minifig({ x, y, z = 0, torso = "red", legs = "blue", hair = "bro
     : custom({ faces: frustumFaces(cx, cy, 5.2, headZ + 6.4, 4.2, headZ + 10.8, 20), color: hair });
   const back = [arm(-1), arm(1)].filter(() => true);
   return group({
+    kind: "minifig",
     ...rest,
     box: boxOf(cx - 9, cy - 3.2, z0, cx + 9, cy + 3.2, headZ + 11),
     parts: [...legParts, hips, back[0], torsoPart, back[1], hand(-1), hand(1), neckPart, head, top],
@@ -349,4 +361,6 @@ export const BRICK_CSS = `
 .lb-stud{stroke:none}
 .lb[data-trans]>path:not(.lb-edge):not(.lb-crease){fill-opacity:.78}
 .lb-face{fill:none;stroke:#1b1b1b;stroke-width:.8;stroke-linecap:round}
+.iso-svg .lb-hose{fill:none;stroke-linecap:butt;stroke-linejoin:round;vector-effect:none}
+.lb-ring{fill:none;stroke-width:.7;stroke-opacity:.6;stroke-linecap:round}
 `;
