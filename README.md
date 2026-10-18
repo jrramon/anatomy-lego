@@ -91,6 +91,7 @@ Cada página es un único archivo HTML, sin dependencias, que funciona sin conex
 | [`examples/motor`](examples/motor) | Un mecanismo por dentro: pistón, biela y válvulas movidos por un solo ángulo; llama y humo |
 | [`examples/dia-noche`](examples/dia-noche) | Una pieza que gira de verdad, iluminada por un Sol de la escena |
 | [`examples/vapor`](examples/vapor) | Todos los kits a la vez: fuego, giro, piezas redondas, cables y un circuito cerrado |
+| [`examples/barco`](examples/barco) | Algo medio sumergido: un barco que flota en un puerto visto en corte, y una fuerza que el niño provoca empujándolo |
 
 Cada una se genera con `node examples/<nombre>/build.mjs`, que escribe la página junto al script. Con `--audit` comprueba además la geometría.
 
@@ -119,7 +120,7 @@ La referencia completa está en [`references/kit.md`](references/kit.md).
 - Pulsa sus botones y comprueba cada causa y su efecto con `scripts/drive.mjs`, con y sin WebGL.
 - Pasa la auditoría a cero.
 
-La CI regenera y audita las seis lecciones en cada cambio.
+La CI regenera y audita las siete lecciones en cada cambio.
 
 ## Limitaciones
 

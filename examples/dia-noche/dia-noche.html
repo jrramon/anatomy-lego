@@ -856,6 +856,7 @@ const ISO_CSS = `
 @media (prefers-reduced-motion:reduce){.iso-line[data-flow],.iso-dots circle[data-pulse]{animation:none}}
 `;
 
+const STUD = 8, PLATE = 3.2, BRICK = 9.6;
 const lesson = (function lessonRuntime({ steps, projection }) {
   const root = document.querySelector(".lb-lesson");
   const svg = root.querySelector("svg");
@@ -992,7 +993,8 @@ const lesson = (function lessonRuntime({ steps, projection }) {
     if (lesson.fx.draw(now / 1000, dt)) moving = true;
     for (const route of routes) {
       if (route.level > 0.001) moving = true;
-      route.offset = (route.offset + route.speed * route.level * dt) % route.gap;
+      // A negative speed runs the pieces backwards along the route.
+      route.offset = (((route.offset + route.speed * route.level * dt) % route.gap) + route.gap) % route.gap;
       route.nodes.forEach((node, i) => {
         const s = route.offset + i * route.gap;
         const alpha = Math.max(0, Math.min(1, Math.min(s, route.length - s) / 8)) * route.level;
@@ -1017,6 +1019,7 @@ const lesson = (function lessonRuntime({ steps, projection }) {
   }
   return lesson;
 })({"steps":[{"say":"¡Vamos a construir el Sol y la Tierra con LEGO!","ask":"¿Tú sabes por qué por la noche está oscuro?","note":"Es una maqueta, como las de clase. Los tamaños no son reales: el Sol es 109 veces más ancho que la Tierra y está a unos 150 millones de kilómetros.","night":null},{"say":"Este es el Sol. Es una bola de fuego gigante que nos da luz y calor.","ask":"¿De qué color es el Sol? ¿Se puede mirar directamente? (¡No, que hace daño a los ojos!)","note":"El Sol es una estrella, una bola enorme de gas muy caliente. Su luz tarda unos 8 minutos en llegar hasta nosotros.","night":null},{"say":"Esta es la Tierra, donde vivimos. La luz del Sol solo llega a la mitad que lo está mirando.","ask":"¿Qué mitad está iluminada? ¿Y cuál está a oscuras?","note":"La Tierra es casi una esfera, así que el Sol solo puede iluminar la mitad que tiene de frente. En la otra mitad es de noche.","night":null},{"say":"Aquí, en España, está nuestra casa. Ahora mira hacia el Sol: ¡es de día!","ask":"¿Encuentras nuestra casa? ¿De qué color es el tejado?","note":"La maqueta no tiene la inclinación del eje de la Tierra (unos 23 grados), que es la que causa las estaciones. Para entender el día y la noche no hace falta.","night":null},{"say":"La Tierra da vueltas como una peonza. Cuando nuestra casa deja de mirar al Sol… ¡se hace de noche y encendemos las luces!","ask":"¿Se han encendido las ventanas? ¿Y cuándo vuelve a ser de día?","note":"Es la Tierra la que gira, no el Sol el que da vueltas a nuestro alrededor. Por eso el Sol parece salir por el este y ponerse por el oeste.","night":null},{"say":"Una vuelta entera tarda un día. Por eso cada día hay mañana, tarde y noche.","ask":"¿Qué haces tú por la mañana? ¿Y por la noche?","note":"Una vuelta dura unas 24 horas. Cuando en España es mediodía, en Australia, al otro lado, es de noche.","night":null},{"say":"¡Ahora te toca a ti! Gira la Tierra con el ratón y haz que en casa sea de día o de noche.","ask":"¿Puedes poner nuestra casa justo enfrente del Sol? ¿Qué hora será allí?","note":"Además de girar sobre sí misma, la Tierra da una vuelta alrededor del Sol que dura un año. Eso lo dejamos para otra lección.","night":null}],"projection":{"origin":[278.570897250381,146.64344976636556],"scale":2.5689532533848665,"azimuth":55,"elevation":30}});
+window.lesson = lesson;
 const spinOf = function spinRuntime(node, data, projection) {
   const { pivot, axis, sun, light } = data;
   const { sinA, cosA, sinE, cosE } = cameraOf(projection);

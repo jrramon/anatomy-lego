@@ -880,6 +880,7 @@ const ISO_CSS = `
 @media (prefers-reduced-motion:reduce){.iso-line[data-flow],.iso-dots circle[data-pulse]{animation:none}}
 `;
 
+const STUD = 8, PLATE = 3.2, BRICK = 9.6;
 const lesson = (function lessonRuntime({ steps, projection }) {
   const root = document.querySelector(".lb-lesson");
   const svg = root.querySelector("svg");
@@ -1016,7 +1017,8 @@ const lesson = (function lessonRuntime({ steps, projection }) {
     if (lesson.fx.draw(now / 1000, dt)) moving = true;
     for (const route of routes) {
       if (route.level > 0.001) moving = true;
-      route.offset = (route.offset + route.speed * route.level * dt) % route.gap;
+      // A negative speed runs the pieces backwards along the route.
+      route.offset = (((route.offset + route.speed * route.level * dt) % route.gap) + route.gap) % route.gap;
       route.nodes.forEach((node, i) => {
         const s = route.offset + i * route.gap;
         const alpha = Math.max(0, Math.min(1, Math.min(s, route.length - s) / 8)) * route.level;
@@ -1041,6 +1043,7 @@ const lesson = (function lessonRuntime({ steps, projection }) {
   }
   return lesson;
 })({"steps":[{"say":"¡Vamos a construir un kart de LEGO y a mirar dentro de su motor!","ask":"¿Has oído alguna vez el ruido de un motor? ¿Cómo suena?","note":"Vamos a ver un motor de gasolina de cuatro tiempos, el de casi todos los coches que no son eléctricos. El cilindro es de cristal para ver qué pasa dentro.","night":null},{"say":"Este es nuestro kart. Está subido en unos soportes para que las ruedas giren sin moverse del sitio.","ask":"¿Cuántas ruedas tiene? ¿Quién lo conduce?","note":"Los mecánicos levantan los coches así para trabajar en ellos. Aquí nos sirve para ver girar las ruedas sin que el kart se escape.","night":null},{"say":"Dentro del motor hay un pistón rojo que sube y baja. Al bajar empuja una barra que hace girar las ruedas, ¡como tus piernas en los pedales de la bici!","ask":"¿Ves cómo sube y baja el pistón? ¿Y cómo giran las ruedas?","note":"La barra es la biela y la rueda que gira es el cigüeñal: convierten el sube y baja del pistón en giro. En un kart de verdad el giro llega a las ruedas por una cadena; aquí el cigüeñal va en el mismo eje para que se vea mejor.","night":null},{"say":"El motor respira: cuando el pistón baja, entra aire y un poquito de gasolina. Luego el pistón sube y lo aprieta muy fuerte.","ask":"¿De qué color es el aire? ¿Y la gasolina?","note":"Son los dos primeros tiempos: admisión (se abre la válvula de entrada y el pistón baja) y compresión (se cierran las válvulas y el pistón sube). Ahora lo mueve un motor eléctrico de arranque, todavía no hay chispa.","night":null},{"say":"Arriba hay una bujía que hace una chispa. La chispa enciende la mezcla y… ¡pum! La explosión empuja el pistón hacia abajo con mucha fuerza.","ask":"¿Ves el destello? ¡Di «pum» cada vez que salte la chispa!","note":"Es el tercer tiempo, el único que da fuerza: la mezcla arde muy deprisa, los gases calientes se expanden y empujan el pistón. La chispa la da la bujía con corriente de la batería, que una bobina sube a miles de voltios. Los motores diésel no tienen bujía: el aire se aprieta tanto que se calienta y el gasóleo arde solo.","night":null},{"say":"Después el pistón sube y echa el humo por el tubo de escape. ¡Y otra vez: aire, apretar, pum, humo!","ask":"¿Lo decimos juntos? ¡Aire, apretar, pum, humo!","note":"Es el cuarto tiempo, el escape. Cada ciclo son dos vueltas del cigüeñal; un coche al ralentí da unas 800 vueltas por minuto, así que cada cilindro hace «pum» unas 400 veces por minuto. Casi todos los coches tienen 3 o 4 cilindros, cada uno en un tiempo distinto.","night":null},{"say":"¡Quitamos los soportes y a correr! Pisa el acelerador para que el motor gire más deprisa.","ask":"¿Qué pasa con el kart cuando aceleras? ¿Y si apagamos el motor?","note":"Acelerar abre el paso de aire y la inyección echa más gasolina: más «pums» por segundo, el motor gira más rápido y el kart corre más. Los coches eléctricos no hacen nada de esto: un motor eléctrico gira con imanes, sin explosiones ni humo.","night":null}],"projection":{"origin":[274.236071924754,130.09807036093855],"scale":2.3282174056272558,"azimuth":55,"elevation":30}});
+window.lesson = lesson;
 const fxView = document.querySelector(".lb-lesson svg").viewBox.baseVal;
 lesson.fx = (function fxRuntime({ canvas, fragment, view, camera, effects }) {
   const gl = canvas.getContext("webgl", { premultipliedAlpha: true, alpha: true, antialias: false });
@@ -1071,7 +1074,7 @@ lesson.fx = (function fxRuntime({ canvas, fragment, view, camera, effects }) {
   const key = (id) => id.replace(/[^a-zA-Z0-9]/g, "_");
   const state = {};
   for (const effect of effects) {
-    state[effect.id] = { effect, level: 0, offset: [0, 0, 0], low: effect.z0 ?? 0, drops: Array.from({ length: 8 }, () => [0, 0, 0, 0]), next: 0 };
+    state[effect.id] = { effect, level: 0, offset: [0, 0, 0], low: effect.z0 ?? 0, z: effect.z ?? 0, drops: Array.from({ length: 8 }, () => [0, 0, 0, 0]), next: 0 };
   }
   let painted = false;
   const controller = {
@@ -1109,6 +1112,8 @@ lesson.fx = (function fxRuntime({ canvas, fragment, view, camera, effects }) {
         if (offset) gl.uniform3f(offset, ...s.offset);
         const low = where(`u_${u}_low`);
         if (low) gl.uniform1f(low, s.low);
+        const height = where(`u_${u}_z`);
+        if (height) gl.uniform1f(height, s.z);
         const drops = where(`u_${u}_drops`);
         if (drops) {
           s.drops.forEach((drop) => { if (drop[3] > 0) { drop[2] += dt; if (drop[2] > 2.5) drop[3] = 0; } });

@@ -15,9 +15,11 @@ const safe = (id) => id.replace(/[^a-zA-Z0-9]/g, "_");
 // (a dam beside the water, a pipe in front of a cylinder). The canvas lies over the whole SVG, so
 // without them the effect would paint over those pieces. Boxes move with the effect's offset.
 
-// Water lying in a rectangle of the floor plane at height z, in millimetres.
-export function water({ id, rect, z, occluders = [] }) {
-  return { type: "water", id, rect, z, occluders };
+// Water lying in a rectangle of the floor plane at height z, in millimetres. The water itself never
+// moves; `movers` are occluders that ride lesson.fx.offset(id, [x, y, z]): a boat that bobs on it,
+// a crane load that swings over it.
+export function water({ id, rect, z, occluders = [], movers = [] }) {
+  return { type: "water", id, rect, z, occluders, ...(movers.length ? { movers } : {}) };
 }
 // A flame filling a vertical cylinder of radius r around (x, y), between z0 and z1. z0 can be moved
 // from the page (the crown of a piston): lesson.fx.set(id, "low", z).
@@ -52,18 +54,19 @@ bool boxHit(vec3 o,vec3 d,vec3 lo,vec3 hi,float t){vec3 a=(lo-o)/d;vec3 b=(hi-o)
 `;
 
 // GLSL that tells whether the point at ray distance t is behind one of the effect's occluders.
-function hiddenGlsl(u, occluders, offset) {
-  const tests = occluders.map(([x0, y0, z0, x1, y1, z1]) => `if(boxHit(o,d,${vec([x0, y0, z0])}${offset},${vec([x1, y1, z1])}${offset},t))return true;`).join("");
+function hiddenGlsl(u, occluders, offset, movers = [], moved = "") {
+  const box = (x0, y0, z0, x1, y1, z1, by) => `if(boxHit(o,d,${vec([x0, y0, z0])}${by},${vec([x1, y1, z1])}${by},t))return true;`;
+  const tests = occluders.map((b) => box(...b, offset)).join("") + movers.map((b) => box(...b, moved)).join("");
   return `bool hidden_${u}(vec3 o,vec3 d,float t){${tests}return false;}
 `;
 }
 
-function waterGlsl({ id, rect, z, occluders }) {
+function waterGlsl({ id, rect, z, occluders, movers = [] }) {
   const u = safe(id);
-  return `uniform float u_${u}_level;uniform vec4 u_${u}_drops[8];
-${hiddenGlsl(u, occluders, "")}vec4 fx_${u}(vec2 vb){
+  return `uniform float u_${u}_level;uniform float u_${u}_z;uniform vec4 u_${u}_drops[8];${movers.length ? `uniform vec3 u_${u}_offset;` : ""}
+${hiddenGlsl(u, occluders, "", movers, `+u_${u}_offset`)}vec4 fx_${u}(vec2 vb){
   if(u_${u}_level<=.001)return vec4(0.);
-  vec3 p=onFloor(vb,${num(z)});
+  vec3 p=onFloor(vb,u_${u}_z);
   {vec3 o=rayOf(vb);vec3 d=towardViewer();if(hidden_${u}(o,d,dot(p-o,d)))return vec4(0.);}
   float soft=pixelOf()*1.5;
   float inside=window(p.x,${num(rect[0])},${num(rect[2])},soft)*window(p.y,${num(rect[1])},${num(rect[3])},soft);
@@ -164,7 +167,7 @@ export function fxRuntime({ canvas, fragment, view, camera, effects }) {
   const key = (id) => id.replace(/[^a-zA-Z0-9]/g, "_");
   const state = {};
   for (const effect of effects) {
-    state[effect.id] = { effect, level: 0, offset: [0, 0, 0], low: effect.z0 ?? 0, drops: Array.from({ length: 8 }, () => [0, 0, 0, 0]), next: 0 };
+    state[effect.id] = { effect, level: 0, offset: [0, 0, 0], low: effect.z0 ?? 0, z: effect.z ?? 0, drops: Array.from({ length: 8 }, () => [0, 0, 0, 0]), next: 0 };
   }
   let painted = false;
   const controller = {
@@ -202,6 +205,8 @@ export function fxRuntime({ canvas, fragment, view, camera, effects }) {
         if (offset) gl.uniform3f(offset, ...s.offset);
         const low = where(`u_${u}_low`);
         if (low) gl.uniform1f(low, s.low);
+        const height = where(`u_${u}_z`);
+        if (height) gl.uniform1f(height, s.z);
         const drops = where(`u_${u}_drops`);
         if (drops) {
           s.drops.forEach((drop) => { if (drop[3] > 0) { drop[2] += dt; if (drop[2] > 2.5) drop[3] = 0; } });

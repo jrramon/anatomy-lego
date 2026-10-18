@@ -861,6 +861,7 @@ const ISO_CSS = `
 @media (prefers-reduced-motion:reduce){.iso-line[data-flow],.iso-dots circle[data-pulse]{animation:none}}
 `;
 
+const STUD = 8, PLATE = 3.2, BRICK = 9.6;
 const lesson = (function lessonRuntime({ steps, projection }) {
   const root = document.querySelector(".lb-lesson");
   const svg = root.querySelector("svg");
@@ -997,7 +998,8 @@ const lesson = (function lessonRuntime({ steps, projection }) {
     if (lesson.fx.draw(now / 1000, dt)) moving = true;
     for (const route of routes) {
       if (route.level > 0.001) moving = true;
-      route.offset = (route.offset + route.speed * route.level * dt) % route.gap;
+      // A negative speed runs the pieces backwards along the route.
+      route.offset = (((route.offset + route.speed * route.level * dt) % route.gap) + route.gap) % route.gap;
       route.nodes.forEach((node, i) => {
         const s = route.offset + i * route.gap;
         const alpha = Math.max(0, Math.min(1, Math.min(s, route.length - s) / 8)) * route.level;
@@ -1022,6 +1024,7 @@ const lesson = (function lessonRuntime({ steps, projection }) {
   }
   return lesson;
 })({"steps":[{"say":"¡Vamos a construir un aeropuerto de LEGO y a descubrir por qué un avión puede volar!","ask":"¿Has visto alguna vez un avión despegar? ¿Hacía mucho ruido?","note":"La idea es que vea lo invisible: el aire. Lo dibujamos como piezas blancas para que pueda seguirlo con el dedo.","night":null},{"say":"Este es nuestro avión. Pesa muchísimo… entonces, ¿cómo puede subir hasta el cielo?","ask":"¿Dónde están las alas? ¿Y cuántas ruedas tiene?","note":"Sobre un avión actúan cuatro fuerzas: el peso tira hacia abajo, la sustentación de las alas empuja hacia arriba, el motor empuja hacia delante y el aire frena hacia atrás.","night":null},{"say":"Antes de volar, un camión le da combustible por una manguera. Es la comida del motor.","ask":"¿Por dónde entra el combustible? ¡Sigue las piezas naranjas!","note":"En las avionetas el depósito suele ir dentro de las alas, como aquí. Las de hélice gastan gasolina de aviación; los aviones grandes de reacción, queroseno.","night":null},{"say":"¡Arrancamos el motor! La hélice gira muy rápido y empuja el aire hacia atrás… y el aire empuja al avión hacia delante.","ask":"¿Hacia dónde van las piezas blancas que salen de la hélice?","note":"Es la tercera ley de Newton: la hélice lanza aire hacia atrás y el aire empuja la hélice hacia delante. Ahora tiene los frenos puestos, por eso no se mueve.","night":null},{"say":"Cuando el avión corre muy rápido, el aire pasa por encima y por debajo del ala. El ala empuja el aire hacia abajo… ¡y el aire empuja el ala hacia arriba!","ask":"¿Ves cómo las piezas blancas bajan detrás del ala? ¡Mira cómo despega!","note":"El ala va un poco inclinada y curvada, y desvía mucho aire hacia abajo; por eso arriba la presión baja y abajo sube. Ojo con una explicación muy repetida pero falsa: que el aire de arriba «tiene que llegar a la vez» que el de abajo. No es así. Cuanto más rápido corre el avión, más empuja el ala: la sustentación crece con el cuadrado de la velocidad.","night":null},{"say":"Ahora subimos seis pasajeros. Con tanto peso, el avión tiene que correr mucho más para despegar… ¡y la pista se acaba!","ask":"¿Ha podido despegar? ¿Por qué crees que no?","note":"Cuanto más pesa un avión, más rápido tiene que ir para que las alas lo levanten, y más pista necesita. Los aviones de verdad tienen un peso máximo y los pilotos calculan la pista que les hace falta antes de cada despegue. Nuestra pista es cortita a propósito.","night":null},{"say":"¡Ahora te toca a ti! Elige cuántos pasajeros suben y dale a volar.","ask":"¿Con cuántos pasajeros consigue despegar?","note":"Hemos simplificado: un avión real también gira el morro hacia arriba al despegar (rotación), usa flaps para tener más sustentación a poca velocidad y recoge las ruedas.","night":null}],"projection":{"origin":[285.97771221262474,197.54350040795342],"scale":1.5842281646973841,"azimuth":55,"elevation":30}});
+window.lesson = lesson;
 
 const P = {"origin":[285.97771221262474,197.54350040795342],"scale":1.5842281646973841,"azimuth":55,"elevation":30};
 const PROP = [141,96,30];

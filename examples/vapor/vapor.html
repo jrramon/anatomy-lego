@@ -864,6 +864,7 @@ const ISO_CSS = `
 @media (prefers-reduced-motion:reduce){.iso-line[data-flow],.iso-dots circle[data-pulse]{animation:none}}
 `;
 
+const STUD = 8, PLATE = 3.2, BRICK = 9.6;
 const lesson = (function lessonRuntime({ steps, projection }) {
   const root = document.querySelector(".lb-lesson");
   const svg = root.querySelector("svg");
@@ -1000,7 +1001,8 @@ const lesson = (function lessonRuntime({ steps, projection }) {
     if (lesson.fx.draw(now / 1000, dt)) moving = true;
     for (const route of routes) {
       if (route.level > 0.001) moving = true;
-      route.offset = (route.offset + route.speed * route.level * dt) % route.gap;
+      // A negative speed runs the pieces backwards along the route.
+      route.offset = (((route.offset + route.speed * route.level * dt) % route.gap) + route.gap) % route.gap;
       route.nodes.forEach((node, i) => {
         const s = route.offset + i * route.gap;
         const alpha = Math.max(0, Math.min(1, Math.min(s, route.length - s) / 8)) * route.level;
@@ -1025,6 +1027,7 @@ const lesson = (function lessonRuntime({ steps, projection }) {
   }
   return lesson;
 })({"steps":[{"say":"¡Vamos a construir con LEGO una fábrica de electricidad que funciona con vapor!","ask":"¿Has visto alguna vez salir vapor de una olla?","note":"Muchas centrales eléctricas funcionan así: con calor hacen vapor y con el vapor mueven un generador. Las de carbón, gas o biomasa y también las nucleares son centrales de vapor; solo cambia de dónde sale el calor.","night":null},{"say":"Primero, el fuego. Quemamos leña y hace mucho, mucho calor.","ask":"¿De qué colores es el fuego?","note":"En una central de verdad se quema gas, carbón o biomasa, o el calor sale de la fisión del uranio en una nuclear. Aquí usamos leña para que se entienda.","night":null},{"say":"Encima ponemos una caldera llena de agua. El fuego la calienta hasta que hierve… ¡y sale vapor, como en una olla!","ask":"¿Ves salir el vapor por arriba?","note":"La caldera calienta el agua dentro de muchos tubos hasta convertirla en vapor a muy alta presión y temperatura: en las centrales grandes, más de 500 °C y unas 160 veces la presión del aire.","night":null},{"say":"El vapor sale con mucha fuerza por un tubo y empuja la rueda de la turbina, como cuando soplas un molinillo.","ask":"¿Ves girar la rueda? ¿Dónde está el aspa roja?","note":"Una turbina de verdad tiene muchas filas de álabes; el vapor pasa por ellas y las hace girar muy deprisa. En España giran a 3.000 vueltas por minuto, para dar corriente de 50 hercios.","night":null},{"say":"La turbina hace girar un imán dentro del generador. Al girar el imán junto a las bobinas de cobre… ¡se fabrica electricidad!","ask":"¿Ves el imán rojo y azul dando vueltas?","note":"Al mover un imán junto a una bobina de cobre se crea corriente eléctrica: es la inducción. En las centrales gira un electroimán dentro de bobinas fijas, y el generador es tan grande como un autobús.","night":null},{"say":"La electricidad viaja por el cable hasta las casas y enciende las luces.","ask":"¿Se han encendido las ventanas? ¿Sigues las piezas amarillas con el dedo?","note":"En realidad la electricidad sale de la central por un transformador y líneas de alta tensión, como en la lección de la farola.","night":null},{"say":"El vapor usado se enfría en la torre y vuelve a ser agua. Una bomba la lleva otra vez a la caldera, ¡y vuelta a empezar!","ask":"¿Puedes seguir con el dedo el camino del agua azul?","note":"El vapor que sale de la turbina se enfría en un condensador y vuelve a ser agua; el agua del circuito es siempre la misma. Lo que sale de las torres de refrigeración es vapor de agua, no humo.","night":null},{"say":"¡Ahora te toca a ti! Echa más leña o apaga el fuego, y mira qué pasa con las luces de la casa.","ask":"Si apagamos el fuego… ¿qué le pasa a la casa?","note":"Una simplificación: en una central real la turbina gira siempre a la misma velocidad. Con más fuego no gira más deprisa, sino que entrega más energía a la red.","night":null}],"projection":{"origin":[216.84477816079817,128.41279713689372],"scale":1.6267982820445241,"azimuth":55,"elevation":30}});
+window.lesson = lesson;
 const fxView = document.querySelector(".lb-lesson svg").viewBox.baseVal;
 lesson.fx = (function fxRuntime({ canvas, fragment, view, camera, effects }) {
   const gl = canvas.getContext("webgl", { premultipliedAlpha: true, alpha: true, antialias: false });
@@ -1055,7 +1058,7 @@ lesson.fx = (function fxRuntime({ canvas, fragment, view, camera, effects }) {
   const key = (id) => id.replace(/[^a-zA-Z0-9]/g, "_");
   const state = {};
   for (const effect of effects) {
-    state[effect.id] = { effect, level: 0, offset: [0, 0, 0], low: effect.z0 ?? 0, drops: Array.from({ length: 8 }, () => [0, 0, 0, 0]), next: 0 };
+    state[effect.id] = { effect, level: 0, offset: [0, 0, 0], low: effect.z0 ?? 0, z: effect.z ?? 0, drops: Array.from({ length: 8 }, () => [0, 0, 0, 0]), next: 0 };
   }
   let painted = false;
   const controller = {
@@ -1093,6 +1096,8 @@ lesson.fx = (function fxRuntime({ canvas, fragment, view, camera, effects }) {
         if (offset) gl.uniform3f(offset, ...s.offset);
         const low = where(`u_${u}_low`);
         if (low) gl.uniform1f(low, s.low);
+        const height = where(`u_${u}_z`);
+        if (height) gl.uniform1f(height, s.z);
         const drops = where(`u_${u}_drops`);
         if (drops) {
           s.drops.forEach((drop) => { if (drop[3] > 0) { drop[2] += dt; if (drop[2] > 2.5) drop[3] = 0; } });

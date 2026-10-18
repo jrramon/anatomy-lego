@@ -412,7 +412,10 @@ export function sceneSvg(pieces, projection, { shadows = false, ground = 3 * PLA
       const step = piece.step ?? 0;
       const index = count.get(step) ?? 0;
       count.set(step, index + 1);
-      const data = (piece.id ? ` data-id="${piece.id}"` : "") + (piece.until !== undefined ? ` data-until="${piece.until}"` : "");
+      // `attrs` adds attributes of the piece's own to its wrapper, e.g. { "data-crate": 2 } to tell apart
+      // pieces that share an id.
+      const extra = piece.attrs ? Object.entries(piece.attrs).map(([key, value]) => ` ${key}="${String(value).replace(/"/g, "&quot;")}"`).join("") : "";
+      const data = (piece.id ? ` data-id="${piece.id}"` : "") + (piece.until !== undefined ? ` data-until="${piece.until}"` : "") + extra;
       return `<g class="lb-piece" data-step="${step}"${data} style="--i:${index}">${shadows && casts(piece) ? shadowSvg(piece, projection) : ""}${piece.svg(projection, covered.get(piece))}</g>`;
     })
     .join("");

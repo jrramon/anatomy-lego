@@ -46,6 +46,9 @@ jobs:
       - name: Central de vapor (LEGO)
         run: node examples/vapor/build.mjs --audit
 
+      - name: Barco (LEGO)
+        run: node examples/barco/build.mjs --audit
+
       - name: Committed pages are unchanged
         run: |
           git status --short

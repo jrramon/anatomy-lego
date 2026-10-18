@@ -38,7 +38,7 @@ Proyección isométrica y página base. Las lecciones usan sobre todo esto:
 
 También están los constructores del Anatomy original: sólidos extruidos (`slabOf`, `cylinder`, `extrude`, `roundedPlan`, `insetPlan`); líneas sobre caras (`onTop`, `lineOnTop`, `planOutline`, `ring`, `segment`, `rise`, `sideArc`, `sideRing`, `sideSeam`); detalles (`knurl`, `coil`, `topTicks`, `sideTicks`, `radialTicks`, `dotGrid`, `corners`); marcas en SVG (`lineSvg`, `dotsSvg`, `wireSvg`, `fadeLineSvg`, `faceTextSvg`); y matrices para pegar texto en una cara (`topMatrix`, `sideMatrix`). Las lecciones casi nunca los necesitan, porque `brick.mjs` dibuja con su propio sombreado. Sirven si hace falta una marca fina sobre una pieza: una escala, un muelle, un texto grabado.
 
-En la página, la lección incrusta el núcleo entero (`kitScript()`), así que `iso`, `depthOf`, `cameraOf`, `pathOf` y `translateAlong` se pueden usar en el `script`.
+En la página, la lección incrusta el núcleo entero (`kitScript()`), así que todas sus funciones (`iso`, `depthOf`, `cameraOf`, `pathOf`, `translateAlong`…) se pueden usar en el `script`, junto con las medidas `STUD`, `PLATE` y `BRICK`. Las demás constantes y funciones de los kits LEGO **no** están en la página: pásalas al `script` con `${JSON.stringify(…)}`.
 
 ## 2. Piezas: `brick.mjs`
 
@@ -75,9 +75,10 @@ Una pieza es un objeto `{ box, svg(P), … }`, y `sceneSvg` las ordena y las dib
 
 | Opción | Para qué |
 |---|---|
-| `step` | El paso de la lección en que aparece (0 por defecto). |
+| `step` | El paso de la lección en que aparece, empezando en 0 (0 por defecto). |
 | `until` | El último paso en que se ve: una manguera que se retira, unos soportes que se quitan. |
 | `id` | Sale como `data-id`, para clics y estilos. |
+| `attrs` | Atributos propios en el envoltorio de la pieza, `{ nombre: valor }`: sirve para distinguir piezas que comparten `id` (cada caja de un montón). |
 | `name` | El nombre que usa la auditoría en sus mensajes. |
 | `overlaps`, `float`, `offGrid` | Excepciones para la auditoría (§ 8). |
 
@@ -90,13 +91,13 @@ Una pieza es un objeto `{ box, svg(P), … }`, y `sceneSvg` las ordena y las dib
 | `group({ parts, box })` | Varias piezas que se ordenan como una sola. Las partes se dibujan en el orden de la lista, de atrás adelante. |
 | `boxOf(x0, y0, z0, x1, y1, z1)` | La caja de una pieza, para las que se hacen a mano. |
 
-Cada pieza lleva también `kind`, `color` y, si es de rejilla, `grid` (`circle` las redondas), que usa la auditoría.
+Cada pieza lleva también `kind`, `color` y, si es de rejilla, `grid` (`circle` las redondas), que usa la auditoría. Su `svg` se llama como `svg(P, covered)`: `covered` es el conjunto de *studs* que otra pieza tapa, que `sceneSvg` le pasa para no dibujarlos. Si envuelves el `svg` de una pieza, pásale `covered`.
 
 ### Orden y escena
 
 | Función | Qué hace |
 |---|---|
-| `sceneSvg(pieces, P, { shadows = false, ground = 3 placas })` | Ordena las piezas y envuelve cada una en `<g class="lb-piece" data-step data-until data-id>`, que es lo que hace que caigan en su paso. Con `shadows`, las piezas de pie hasta la altura `ground` proyectan una sombra suave de contacto (una pieza decide con `shadow: true/false`). No dibuja los *studs* tapados por otra pieza apoyada encima. |
+| `sceneSvg(pieces, P, { shadows = false, ground = 3 placas })` (se puede llamar varias veces en una página: repite sus `<defs>` con los mismos `id`, sin efecto) | Ordena las piezas y envuelve cada una en `<g class="lb-piece" data-step data-until data-id>`, que es lo que hace que caigan en su paso. Con `shadows`, las piezas de pie hasta la altura `ground` proyectan una sombra suave de contacto (una pieza decide con `shadow: true/false`). No dibuja los *studs* tapados por otra pieza apoyada encima. |
 | `orderPieces(pieces, P)` | Solo el orden. Donde dos piezas se solapan en pantalla y están separadas en algún eje, la de más cerca va después; si no se separan en ninguno, decide la profundidad del centro. Si piezas que se atraviesan forman un ciclo, se agrupa (componentes fuertemente conexas) y se resuelve por profundidad solo entre sus miembros, sin desordenar el resto. Aun así, **evita que las cajas se atraviesen**. |
 | `splitByLane(pieces, y0, y1)` | Para algo que se mueve a lo largo de `x` en la franja `y0…y1` y se dibuja encima de la escena: `{ behind, ahead, inLane }`. `behind` va antes del vehículo, `ahead` después, y en `inLane` no debería quedar nada con lo que choque. |
 
@@ -132,7 +133,7 @@ En una cámara isométrica un tubo se ve igual de ancho en todas partes, así qu
 
 | Función | Qué hace |
 |---|---|
-| `minifig({ x, y, z, torso = "red", legs = "blue", hair = "brown", hat, facing = "y", skin = "skin", print, hairStyle = "short", hatStyle = "cap", child })` | Una minifigura con medidas reales: piernas con pie, banda de cadera, torso, brazos con hombro redondo, manos en C, cuello y cabeza redondeada con cejas, ojos y sonrisa. Mira hacia +y (`facing: "y"`) o hacia +x (`"x"`). Con `legs: null` está sentada: la cintura queda a la altura `z` y las manos van al frente. Con `hat` lleva gorra; con `hair: null` y sin gorra, el *stud* hueco de la cabeza clásica. Mide unos 40 mm, unos 4 ladrillos. `print` estampa el torso (`jacket`, `shirt`, `apron`, `police`, `hivis`); `hairStyle` es `short`, `ponytail` o `tall`; con `hat`, `hatStyle` es `cap`, `helmet`, `chef` o `police`; `child: true` le da piernas cortas. |
+| `minifig({ x, y, z, torso = "red", legs = "blue", hair = "brown", hat, facing = "y", skin = "skin", print, hairStyle = "short", hatStyle = "cap", child })` | Una minifigura con medidas reales: piernas con pie, banda de cadera, torso, brazos con hombro redondo, manos en C, cuello y cabeza redondeada con cejas, ojos y sonrisa. `x` e `y` son el **centro** de la figura, no una esquina. Mira hacia +y (`facing: "y"`) o hacia +x (`"x"`). Con `legs: null` está sentada: la cintura queda a la altura `z` y las manos van al frente. Con `hat` lleva gorra; con `hair: null` y sin gorra, el *stud* hueco de la cabeza clásica. Mide unos 40 mm, unos 4 ladrillos. `print` estampa el torso (`jacket`, `shirt`, `apron`, `police`, `hivis`); `hairStyle` es `short`, `ponytail` o `tall`; con `hat`, `hatStyle` es `cap`, `helmet`, `chef` o `police`; `child: true` le da piernas cortas. |
 
 ### LEGO City: `lego-city.mjs`
 
@@ -169,7 +170,7 @@ Un lienzo transparente encima del SVG dibuja efectos con la misma cámara, en ba
 
 | Función | Qué hace |
 |---|---|
-| `water({ id, rect: [x0, y0, x1, y1], z, occluders })` | Agua en un rectángulo del suelo, con brillos que se mueven y anillos de gota. |
+| `water({ id, rect: [x0, y0, x1, y1], z, occluders, movers })` | Agua en un rectángulo del suelo, con brillos que se mueven y anillos de gota. `z` es su altura inicial; si el nivel cambia, muévela con `lesson.fx.set(id, "z", nivel)`. El agua no se mueve: `lesson.fx.offset(id, …)` desplaza solo sus `movers`, las cajas de lo que se mueve delante de ella (un barco que sube y baja, una carga colgada de una grúa). |
 | `flame({ id, at: [x, y], r, z0, z1, occluders })` | Llama dentro de un cilindro vertical. |
 | `smoke({ id, at, drift = [-14, 2, 30], size = 1, color, occluders })` | Bocanadas de humo o vapor que suben siguiendo `drift`. Sobre fondo claro, usa un `color` algo más oscuro que el blanco. |
 | `occluders` | Cajas `[x0, y0, z0, x1, y1, z1]` de las piezas que quedan delante del efecto. El *shader* comprueba en cada píxel si el rayo de la cámara las atraviesa antes de llegar al efecto. |
@@ -181,8 +182,8 @@ En la página, `lesson.fx`:
 |---|---|
 | `ready` | `true` si hay WebGL. Úsalo para esconder la versión SVG cuando el efecto se ve. |
 | `level(id, 0…1)` | Enciende o apaga un efecto. |
-| `offset(id, [x, y, z])` | Lo mueve con un grupo que se desplaza. |
-| `set(id, "low", z)` | Mueve el suelo de una llama (la cabeza de un pistón). |
+| `offset(id, [x, y, z])` | Lo mueve con un grupo que se desplaza. En el agua, mueve solo sus `movers`. |
+| `set(id, "low", z)`, `set(id, "z", z)` | Mueve el suelo de una llama (la cabeza de un pistón) o la altura del agua. |
 | `ripple(id, x, y)` | Hace un anillo donde cae una gota. |
 
 ## 8. Auditoría: `lego-audit.mjs`
@@ -220,7 +221,7 @@ En el `script` está `lesson`:
 |---|---|
 | `lesson.step`, `lesson.onStep(fn)` | El paso actual y un aviso cuando cambia. |
 | `lesson.every((dt, now) => sigue)` | El modelo, en cada fotograma. Devuelve `true` mientras necesite más fotogramas. |
-| `lesson.route(points, { token, gap = 24, speed = 40, layer })` | Piezas que viajan por una polilínea. Devuelve una ruta con `level` (0…1) y `speed`, que se pueden cambiar en cada fotograma. Las piezas se desvanecen en los extremos. `layer` es el grupo donde se dibujan (por defecto, `[data-part="tokens"]`). |
+| `lesson.route(points, { token, gap = 24, speed = 40, layer })` | Piezas que viajan por una polilínea. Devuelve una ruta con `level` (0…1) y `speed`, que se pueden cambiar en cada fotograma; una `speed` negativa las hace ir hacia atrás (el agua que vuelve). Las piezas se desvanecen en los extremos. `layer` es el grupo donde se dibujan (por defecto, `[data-part="tokens"]`). |
 | `lesson.button(action, fn, () => etiqueta)` | Conecta un botón de `buttons` y devuelve el nodo, para desactivarlo. La etiqueta se refresca en cada fotograma. |
 | `lesson.click(selector, fn)`, `lesson.key(tecla, fn)` | Clic en una parte del dibujo y atajo de teclado. |
 | `lesson.readout(() => texto)` | La línea viva de abajo a la derecha de la tarjeta. |
@@ -229,13 +230,13 @@ En el `script` está `lesson`:
 | `lesson.fx`, `lesson.spin(id)` | Efectos (§ 7) y grupos que giran (§ 6). |
 | `lesson.kick()` | Vuelve a arrancar el bucle tras un cambio hecho desde fuera (un arrastre con el ratón). |
 
-Con `?paso=N` en la URL, la página abre en ese paso. Las flechas ← → cambian de paso, y la N cambia entre día y noche si hay cielo.
+`lesson` queda también en `window`, para leerlo desde `drive.mjs` (`["eval", "lesson.step"]`); el atributo `data-step` de `.lb-lesson` dice el paso. Con `?paso=N` en la URL, la página abre en ese paso; **`N` empieza en 1**, como «Paso N de M», mientras que `step` empieza en 0. Las flechas ← → cambian de paso, y la N cambia entre día y noche si hay cielo.
 
 ## 10. Herramientas
 
 | Script | Para qué |
 |---|---|
-| `scripts/capture.mjs page.html` | Capturas con Chrome sin ventana, con WebGL. `--out`, `--width`, `--wait`, `--zoom x,y,w,h` (con `--zoom-scale`) para primeros planos y `--times ms,…` para varios momentos. Informa de errores de consola y de *scroll* lateral. Para abrir en un paso: `"file://…/leccion.html?paso=N"`. |
+| `scripts/capture.mjs page.html` | Capturas con Chrome sin ventana, con WebGL. `--out`, `--width`, `--wait`, `--zoom x,y,w,h` (con `--zoom-scale`) para primeros planos y `--times ms,…` para varios momentos. `--wait` cuenta desde que carga la página hasta la primera captura, y cada `--times` desde esa primera captura: para cazar un momento de una animación, súmalos. Informa de errores de consola y de *scroll* lateral. Para abrir en un paso: `"file://…/leccion.html?paso=N"`. |
 | `scripts/drive.mjs page.html '[acciones]'` | Sesiones guionizadas: `wait`, `click`, `drag`, `key`, `eval`, `until`, `shot`, `slow`. `--no-webgl` comprueba que la versión SVG se basta sola. Es la forma de probar botones, pasos y modelos. |
 | `scripts/lines.mjs` | Comprobación de que las líneas finas acaban sobre algo. Viene del original; las lecciones no la necesitan. |
 | `scripts/inline-kit.mjs` | `kitScript()`: el núcleo como script para incrustarlo en la página (`lessonHtml` ya lo hace). |

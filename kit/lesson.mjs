@@ -80,7 +80,8 @@ const spinning = Object.fromEntries(Object.entries(${JSON.stringify(spins)}).map
 lesson.spin = (id) => spinning[id];
 Object.values(spinning).forEach((spin) => spin.set(0));\n`
     : "";
-  const runtime = `${kitScript()}\nconst lesson = (${lessonRuntime.toString()})(${JSON.stringify({ steps, projection })});\n${effects}${turning}${script}\nlesson.start();`;
+  // The page script also gets the kit's LEGO measures, and `lesson` on window so drive.mjs can read it.
+  const runtime = `${kitScript()}\nconst STUD = 8, PLATE = 3.2, BRICK = 9.6;\nconst lesson = (${lessonRuntime.toString()})(${JSON.stringify({ steps, projection })});\nwindow.lesson = lesson;\n${effects}${turning}${script}\nlesson.start();`;
   return pageHtml({ title, theme: "light", body: `<style>${BRICK_CSS}${LESSON_CSS}${fx.length ? FX_CSS : ""}${css}</style>${page}`, script: runtime, width: 1040 }).replace('<html lang="en">', '<html lang="es">');
 }
 
@@ -231,7 +232,8 @@ function lessonRuntime({ steps, projection }) {
     if (lesson.fx.draw(now / 1000, dt)) moving = true;
     for (const route of routes) {
       if (route.level > 0.001) moving = true;
-      route.offset = (route.offset + route.speed * route.level * dt) % route.gap;
+      // A negative speed runs the pieces backwards along the route.
+      route.offset = (((route.offset + route.speed * route.level * dt) % route.gap) + route.gap) % route.gap;
       route.nodes.forEach((node, i) => {
         const s = route.offset + i * route.gap;
         const alpha = Math.max(0, Math.min(1, Math.min(s, route.length - s) / 8)) * route.level;

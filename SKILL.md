@@ -9,16 +9,14 @@ compatibility: Escrita para Claude Code. Necesita Node.js 20.10+, y Chrome o Chr
 
 Esta skill convierte una pregunta de un niño pequeño en una **escena LEGO City que se construye paso a paso** mientras un adulto cuenta la historia. El niño no lee: mira, señala, contesta y toca. El adulto lee en voz alta lo que pone en «Dile», hace la pregunta de «Pregúntale» y, si quiere saber más, tiene la explicación de verdad en «Para mamá o papá».
 
-Hay seis ejemplos completos. Abre el más parecido antes de empezar y cópialo como plantilla:
-- `examples/farola/`: «¿Cómo llega la luz a la farola?». Flujos que dependen del día y la noche, y cable en el corte de tierra.
-- `examples/agua/`: «¿De dónde sale el agua del grifo?». Tuberías (`pipe`), piezas que cambian de color por el camino y la demanda del pueblo frente a la de la casa.
-- `examples/avion/`: «¿Por qué vuela un avión?». Un objeto que se mueve por la escena con su propio aire, que también se mueve con él. Usa piezas redondas (fuselaje, ruedas, cúpula), una manguera que solo aparece en un paso (`until`) y un modelo físico con un caso que falla a propósito (demasiado peso).
-
-- `examples/agua/` y `examples/motor/` usan además `lego-fx`: brillos y anillos de lluvia en el embalse, y una llama y humo de verdad en el motor.
-- `examples/motor/`: «¿Cómo funciona el motor de un coche?». Un mecanismo por dentro: un cilindro de cristal casi transparente, piezas vivas (pistón, biela, válvulas) movidas por un único ángulo, y una carga de piezas que se aprieta y cambia de color según el tiempo del motor. También un piloto sentado (`minifig({ legs: null, facing: "x" })`) y soportes que se retiran (`until`) para que el kart arranque.
-
+Hay siete ejemplos completos. Abre el más parecido antes de empezar y cópialo como plantilla:
+- `examples/farola/`: «¿Cómo llega la luz a la farola?». Flujos que dependen del día y la noche, cable en el corte de tierra, y una calle LEGO City completa (`lego-city`, figuras con oficio, sombras).
+- `examples/agua/`: «¿De dónde sale el agua del grifo?». Tuberías (`pipe`), piezas que cambian de color por el camino, la demanda del pueblo frente a la de la casa, y agua con brillos y lluvia (`lego-fx`).
+- `examples/avion/`: «¿Por qué vuela un avión?». Un objeto que se mueve por la escena con su propio aire, que también se mueve con él. Piezas redondas (fuselaje, ruedas, cúpula), una manguera que solo aparece en un paso (`until`) y un modelo físico con un caso que falla a propósito (demasiado peso).
+- `examples/motor/`: «¿Cómo funciona el motor de un coche?». Un mecanismo por dentro: un cilindro de cristal casi transparente, piezas vivas (pistón, biela, válvulas) movidas por un único ángulo, una carga de piezas que se aprieta y cambia de color, llama y humo (`lego-fx`), un piloto sentado y soportes que se retiran (`until`).
 - `examples/dia-noche/`: «¿Por qué hay día y noche?». Una pieza que gira de verdad (`lego-spin`): la Tierra de ladrillo con continentes, iluminada por el Sol de la escena, con una casa cuyas ventanas se encienden de noche. Se puede arrastrar con el ratón.
-- `examples/vapor/`: «¿Cómo funciona una central de vapor?». Usa todos los kits a la vez: fuego con `lego-fx` bajo una caldera, la rueda de la turbina y el imán del generador girando en el mismo eje con `lego-spin` (eje `x`), bobinas y torre de refrigeración con `lego-round`, y un circuito cerrado de agua y vapor que vuelve a empezar.
+- `examples/vapor/`: «¿Cómo funciona una central de vapor?». Todos los kits a la vez: fuego, turbina y generador girando en un mismo eje, piezas redondas y un circuito cerrado de agua y vapor.
+- `examples/barco/`: «¿Por qué flotan los barcos?». **Algo medio sumergido**: un barco que sube y baja en el agua de un puerto visto en corte, con la receta para dibujar lo que está dentro y fuera del agua, una fuerza (el empuje) que el niño provoca empujando el barco, y piezas que se mueven en vertical.
 
 Cada uno se construye con `node examples/<nombre>/build.mjs`, que escribe la página junto al script. Con `--audit` pasa además la auditoría.
 
@@ -52,7 +50,7 @@ Dos fallos típicos:
 
 1. **La verdad primero.** Escribe en 5-10 líneas cómo funciona de verdad: qué cosas hay, en qué orden, qué cifras. Busca los datos si no los sabes con seguridad. De ahí salen las notas para padres.
 2. **La historia en pasos.** Entre 5 y 8 pasos. El primero presenta el sitio (el suelo, la calle) y hace la pregunta. Cada paso siguiente añade **una** parte de la cadena y su frase. El último es **juego libre**: el niño provoca causas y ve efectos. Escribe los pasos (`say`, `ask`, `note`, `night`) antes de dibujar nada.
-3. **Lo invisible, hecho pieza.** Decide qué viaja (energía, agua, comida, aire) y con qué pieza: color, tamaño y si cambia por el camino (grande → pequeña en el transformador). Debe moverse **solo cuando de verdad hay flujo**: la corriente no va a la farola de día porque está apagada.
+3. **Lo invisible, hecho pieza.** Decide qué viaja (energía, agua, comida, aire) y con qué pieza: color, tamaño y si cambia por el camino (grande → pequeña en el transformador). Debe moverse **solo cuando de verdad hay flujo**: la corriente no va a la farola de día porque está apagada. **Si lo invisible es una fuerza** (el empuje del agua, la presión, el peso) y no un flujo, no la pintes con flechas ni animes piezas que se mueven sin motivo: haz que el niño la provoque con un movimiento real (empujar el barco y ver cómo el agua lo devuelve) y que las piezas muestren ese movimiento.
 4. **Un modelo pequeño.** Las causas y efectos de la lección, como estado y reglas: viento → giro → electricidad en la línea; noche y electricidad → farolas encendidas → corriente en el cable de la calle. Todo lo que se mueve sale de ese modelo, nunca de animaciones sueltas.
 5. **La escena en la rejilla.** Dibuja el plano en *studs*: largo en x, fondo en y, de unos 40-60 × 16-24. Pon la cadena de izquierda (origen) a derecha (destino), y lo que esté bajo tierra en la cara delantera (y máxima), que es la que se ve en corte. Cámara: `azimuth: 55`, `elevation: 30`.
 6. **Construye con el kit.** Asigna a cada pieza su `step`. El paso 0 es el suelo y el paisaje. Las piezas de cada paso caen en su sitio con un rebote al avanzar.
@@ -78,7 +76,7 @@ Las medidas son las de LEGO de verdad, en milímetros: un *stud* mide 8 de ancho
 | `studSvg(cx, cy, z, color, P)` | Un *stud* suelto. |
 | `sceneSvg(pieces, P, { shadows })` | Ordena todas las piezas (las de detrás primero) y las envuelve para los pasos. Con `shadows: true`, lo que está de pie sobre el suelo proyecta una sombra suave. No dibuja los *studs* que tapa otra pieza. |
 
-Cualquier pieza acepta `step`, el paso en que aparece; `until`, el último paso en que se ve (una manguera que se retira); e `id`, que pasa a `data-id` y sirve para clics y estilos. Colores: `red`, `yellow`, `blue`, `green`, `bright-green`, `lime`, `white`, `black`, `light-gray`, `dark-gray`, `tan`, `dark-tan`, `brown`, `orange`, `azure`, `skin`, `trans-yellow` y `trans-clear`, o cualquier `#rrggbb`. El sombreado es el de los folletos de instrucciones (arriba claro, la cara +y media y la cara +x oscura, con contorno fino) con el brillo del plástico: un reflejo en las piezas redondas, el canto de arriba claro y un lustre suave en las paredes.
+Cualquier pieza acepta `step`, el paso en que aparece (empieza en 0); `until`, el último paso en que se ve (una manguera que se retira); `id`, que pasa a `data-id` y sirve para clics y estilos; y `attrs`, atributos propios para distinguir piezas que comparten `id` (`{ "data-crate": 2 }`). Colores: `red`, `yellow`, `blue`, `green`, `bright-green`, `lime`, `white`, `black`, `light-gray`, `dark-gray`, `tan`, `dark-tan`, `brown`, `orange`, `azure`, `skin`, `trans-yellow` y `trans-clear`, o cualquier `#rrggbb`. El sombreado es el de los folletos de instrucciones (arriba claro, la cara +y media y la cara +x oscura, con contorno fino) con el brillo del plástico: un reflejo en las piezas redondas, el canto de arriba claro y un lustre suave en las paredes.
 
 ### `kit/lego-city.mjs`: LEGO City listo para usar
 
@@ -122,7 +120,7 @@ Las minifiguras con oficio, el kit de ciudad y `sceneSvg(…, { shadows: true })
 - **early:** solo la sujetan piezas de un paso posterior.
 - **grid:** un ladrillo o una pieza redonda queda fuera de la rejilla de *studs* y placas.
 
-Para que una excepción sea aceptable hay que declararla en la pieza: `overlaps: true` (un accesorio que se mete en otro; los tubos ya lo traen), `float: true` (una nube) u `offGrid: true` (un cubo suelto, un asa).
+Para que una excepción sea aceptable hay que declararla en la pieza: `overlaps: true` (un accesorio que se mete en otro; los tubos ya lo traen), `float: true` (una nube, algo que flota en el agua, que no es una pieza) u `offGrid: true` (un cubo suelto, un asa).
 
 ### `kit/lego-fx.mjs`: efectos WebGL
 
@@ -130,7 +128,7 @@ Efectos que se dibujan con WebGL sobre el SVG, en la misma cámara y en bandas d
 
 | Función | Qué hace |
 |---|---|
-| `water({ id, rect, z, occluders })` | Agua en un rectángulo del suelo, en milímetros, con brillos que se mueven. `lesson.fx.ripple(id, x, y)` hace un anillo donde cae una gota. |
+| `water({ id, rect, z, occluders, movers })` | Agua en un rectángulo del suelo, en milímetros, con brillos que se mueven. `lesson.fx.ripple(id, x, y)` hace un anillo donde cae una gota. `movers` son las cajas de lo que se mueve delante del agua (un barco): las desplaza `lesson.fx.offset(id, …)`, que en el agua no mueve el agua. |
 | `flame({ id, at, r, z0, z1, occluders })` | Llama dentro de un cilindro vertical. `lesson.fx.set(id, "low", z)` mueve su suelo (la cabeza de un pistón). |
 | `smoke({ id, at, drift, size, color, occluders })` | Bocanadas de humo o vapor que salen de un punto y suben siguiendo `drift`. Sobre fondo claro, usa un `color` algo más oscuro que el blanco para que se vea. |
 
@@ -173,7 +171,9 @@ lesson.readout(() => "💨 hay viento · 💡 farolas encendidas")
 lesson.night, lesson.dark, lesson.ease(desde, hasta, dt, tau)
 ```
 
-`iso(point, P)` y `pathOf(points)` del kit isométrico también están disponibles en la página. Con `?paso=N` en la URL, la página abre directamente en ese paso.
+En el `script` de la página también están todo el núcleo isométrico (`iso`, `depthOf`, `cameraOf`, `pathOf`, `translateAlong`…) y las medidas `STUD`, `PLATE` y `BRICK`; el resto de constantes del kit no, así que pásalas con `${JSON.stringify(…)}`. `lesson` queda también en `window`, para que `drive.mjs` lo lea con `["eval", "lesson.step"]`.
+
+Con `?paso=N` en la URL, la página abre directamente en ese paso. **`N` empieza en 1** (como «Paso 3 de 7»), mientras que `step` y `lesson.step` empiezan en 0: `?paso=3` es `lesson.step === 2`.
 
 ## Reglas de oficio
 
@@ -188,7 +188,9 @@ lesson.night, lesson.dark, lesson.ease(desde, hasta, dt, tau)
 - **Movimiento tranquilo.** Seguimiento exponencial (`lesson.ease`), nada brusco, nada que aparezca de golpe: las rutas ya se desvanecen en los extremos. Con movimiento reducido, todo queda quieto en su estado final.
 - **Causa y efecto honestos.** Lo que pasa al pulsar un botón tiene que ser verdad o estar matizado en la nota para padres.
 - **Sin marcas.** No dibujes el logo de LEGO en los *studs* ni lo uses en títulos. Las lecciones son para uso personal: no las publiques en ninguna galería pública.
-- **Rendimiento.** Una placa base de 30×20 son 600 *studs*. No pases de unas 300 piezas ni de 1 MB de HTML.
+- **Agua y cosas que flotan.** El orden de pintado supone que las piezas no se atraviesan, y algo medio sumergido en un volumen de agua lo rompe. La receta de `examples/barco/`: dibuja el objeto entero; encima, el agua (superficie y cara de corte) translúcida; y encima otra vez el objeto, recortado en cada fotograma a lo que queda por encima del agua (para cada parte vertical, la imagen en pantalla de su franja entre el nivel del agua y su parte de arriba). Si el nivel cambia, mueve también la altura de los brillos con `lesson.fx.set(id, "z", nivel)`.
+- **Lo que sube y baja.** `translateAlong` mueve en cualquier dirección, también en vertical. `splitByLane` solo resuelve el movimiento a lo largo de `x`; para algo que sube y baja, déjalo en su propio grupo y comprueba en capturas que en ningún momento pasa por delante de algo que tiene delante.
+- **Rendimiento.** El límite que cuenta es **1 MB de HTML**; como referencia, la farola tiene unas 320 piezas y pesa 990 KB. Una placa base de 30×20 son 600 *studs*, y las piezas redondas con muchas caras pesan: baja `steps` en las que se ven pequeñas.
 
 ## Comprobación
 

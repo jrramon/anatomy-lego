@@ -863,6 +863,7 @@ const ISO_CSS = `
 @media (prefers-reduced-motion:reduce){.iso-line[data-flow],.iso-dots circle[data-pulse]{animation:none}}
 `;
 
+const STUD = 8, PLATE = 3.2, BRICK = 9.6;
 const lesson = (function lessonRuntime({ steps, projection }) {
   const root = document.querySelector(".lb-lesson");
   const svg = root.querySelector("svg");
@@ -999,7 +1000,8 @@ const lesson = (function lessonRuntime({ steps, projection }) {
     if (lesson.fx.draw(now / 1000, dt)) moving = true;
     for (const route of routes) {
       if (route.level > 0.001) moving = true;
-      route.offset = (route.offset + route.speed * route.level * dt) % route.gap;
+      // A negative speed runs the pieces backwards along the route.
+      route.offset = (((route.offset + route.speed * route.level * dt) % route.gap) + route.gap) % route.gap;
       route.nodes.forEach((node, i) => {
         const s = route.offset + i * route.gap;
         const alpha = Math.max(0, Math.min(1, Math.min(s, route.length - s) / 8)) * route.level;
@@ -1024,6 +1026,7 @@ const lesson = (function lessonRuntime({ steps, projection }) {
   }
   return lesson;
 })({"steps":[{"say":"¡Vamos a construir con LEGO cómo llega la luz a una farola!","ask":"¿Tú sabes de dónde sale la luz de las farolas?","note":"La idea es seguir el camino de la electricidad desde donde se fabrica hasta la farola. No hace falta que lo entienda todo: basta con que siga las piezas amarillas.","night":false},{"say":"Esto es un molino de viento. Cuando sopla el viento, las aspas giran… ¡y dentro del molino se fabrica electricidad!","ask":"¿Soplamos fuerte para que gire? (Haz clic en el molino para parar o soltar el viento.)","note":"Las aspas hacen girar un generador que está en la caja de arriba (la góndola). Al girar, unos imanes se mueven junto a bobinas de cobre y producen corriente eléctrica.","night":false},{"say":"La electricidad es como muchas piececitas amarillas que viajan muy, muy rápido por los cables. Los cables van colgados de unas torres muy altas.","ask":"¿Cuántas torres ves? ¿Y cuántos cables?","note":"Las líneas de alta tensión llevan la electricidad lejos a cientos de miles de voltios, porque así se pierde menos energía por el camino. Las piezas grandes representan esa tensión tan alta, que es muy peligrosa: por eso los cables van tan arriba.","night":false},{"say":"Esto es el transformador. Por los cables altos, la electricidad viene con muchísima fuerza. El transformador la vuelve más suave para poder usarla en la calle.","ask":"¿Ves la señal amarilla del rayo? Significa «¡cuidado, no tocar!».","note":"Una subestación baja la tensión. Entre la central y tu calle suele haber varios transformadores; aquí los juntamos en uno. A una farola llegan unos 230 voltios, como a los enchufes de casa.","night":false},{"say":"Desde el transformador, un cable va escondido debajo de la acera hasta cada farola. Ahora es de día, así que las farolas están apagadas y descansan.","ask":"¿Encuentras el cable negro debajo del suelo?","note":"En las ciudades el cableado del alumbrado va enterrado bajo la acera, dentro de tubos. De día no pasa corriente hacia la farola porque está apagada: la electricidad solo viaja cuando algo la usa.","night":false},{"say":"Cada farola tiene un ojito azul que mira al cielo. Cuando se hace de noche… ¡la electricidad sube por el poste y la farola se enciende!","ask":"¿Qué pasaría por la noche si no hubiera farolas?","note":"Muchas farolas se encienden con una fotocélula (un sensor de luz, el «ojito») o con un reloj astronómico que sabe a qué hora anochece cada día del año.","night":true},{"say":"¡Ahora te toca a ti! Haz que sea de día o de noche, o para el viento del molino.","ask":"Si se para el molino… ¿qué le pasa a la farola?","note":"Una simplificación: en la red de verdad hay muchas centrales conectadas a la vez, así que si un molino se para, las farolas siguen encendidas gracias a las demás.","night":null}],"projection":{"origin":[242.4109319071589,179.6885379938107],"scale":1.479914270077814,"azimuth":55,"elevation":30}});
+window.lesson = lesson;
 
 const HUB = [40,120,108.80000000000001], BLADE = 52;
 const svg = document.querySelector(".lb-lesson svg");
