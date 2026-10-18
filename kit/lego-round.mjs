@@ -1,5 +1,5 @@
 import { depthOf, iso, pathOf } from "./iso-kit.mjs";
-import { GAP, LIGHT, PLATE, STUD, boxOf, edgeOf, studSvg, tone, viewOf } from "./brick.mjs";
+import { GAP, PLATE, STUD, boxOf, edgeOf, glossTone, studSvg, viewOf } from "./brick.mjs";
 
 // Round LEGO parts made by turning a profile around an axis: domes, cones, barrels, balls, dishes
 // and wheels. Kept simple: flat facets shaded like the rest of
@@ -80,7 +80,7 @@ export function meshSvg(faces, color, projection, { trans = false, crease = 30 }
   }
   const edge = edgeOf(color);
   const parts = order.map((index, place) => {
-    const fill = tone(color, Math.max(0, dot(shown[index].normal, LIGHT)));
+    const fill = glossTone(color, shown[index].normal, view);
     const { outline, crease: creaseD } = lines[place];
     return `<path d="${pathOf(shown[index].points.map((p) => iso(p, projection)), true)}" fill="${fill}"${trans ? "" : ` stroke="${fill}"`}/>${creaseD ? `<path class="lb-crease" d="${creaseD}" stroke="${edge}"/>` : ""}${outline ? `<path class="lb-edge" d="${outline}" stroke="${edge}"/>` : ""}`;
   });

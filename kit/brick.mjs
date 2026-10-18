@@ -52,6 +52,18 @@ const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 export function tone(color, intensity) {
   return intensity >= 0.8 ? mix(color, "#ffffff", (intensity - 0.8) * 0.6) : mix(color, "#000000", (0.8 - intensity) * 0.42);
 }
+// Plastic gloss: a face shines where it mirrors the light towards the viewer, so round parts get a
+// bright streak and flat ones a touch of sheen. `glossTone` is `tone` plus that shine.
+export function shine(normal, view) {
+  const h = unit(LIGHT.map((value, index) => value + view[index]));
+  return Math.pow(Math.max(0, dot(normal, h)), 28);
+}
+// `strength` is lower for flat faces, so a big plane catching the light is not washed out.
+export function glossTone(color, normal, view, strength = 0.65) {
+  const base = tone(color, Math.max(0, dot(normal, LIGHT)));
+  const s = shine(normal, view) * strength;
+  return s > 0.015 ? mix(base, "#ffffff", Math.min(0.7, s)) : base;
+}
 export const edgeOf = (color) => (lightness(color) < 0.22 ? mix(color, "#ffffff", 0.28) : mix(color, "#000000", 0.55));
 
 export function viewOf(projection) {
@@ -96,20 +108,30 @@ export function solidSvg(faces, color, projection, { trans = false, glow = false
   const fills = shaped
     .filter((face) => face.visible)
     .map((face) => {
-      const fill = tone(color, Math.max(0, dot(face.normal, LIGHT)));
-      return `<path d="${pathOf(face.points.map((p) => iso(p, projection)), true)}" fill="${fill}" stroke="${fill}"/>`;
+      const fill = glossTone(color, face.normal, view, 0.18);
+      const d = pathOf(face.points.map((p) => iso(p, projection)), true);
+      // Upright faces at least a brick-ish tall get a soft sheen, brighter at the top, as glossy
+      // plastic does; on thin plates and tiles it would not show.
+      const tall = Math.max(...face.points.map((p) => p[2])) - Math.min(...face.points.map((p) => p[2])) >= 6;
+      const sheen = Math.abs(face.normal[2]) < 0.2 && tall && !trans ? `<path class="lb-sheen" d="${d}"/>` : "";
+      return `<path d="${d}" fill="${fill}" stroke="${fill}"/>${sheen}`;
     });
   const limit = Math.cos((crease * Math.PI) / 180);
   let outline = "";
   let creases = "";
+  let lit = "";
   for (const { a, b, faces: owners } of edges.values()) {
     const seen = owners.filter((which) => shaped[which].visible);
     const d = pathOf([iso(a, projection), iso(b, projection)]);
     if (seen.length === 1 && (owners.length === 1 || seen.length < owners.length)) outline += d;
-    else if (seen.length === 2 && dot(shaped[owners[0]].normal, shaped[owners[1]].normal) < limit) creases += d;
+    else if (seen.length === 2 && dot(shaped[owners[0]].normal, shaped[owners[1]].normal) < limit) {
+      // Where the top meets a side, the rounded edge catches the light.
+      if (owners.some((which) => shaped[which].normal[2] > 0.9)) lit += d;
+      else creases += d;
+    }
   }
   const edge = edgeOf(color);
-  return `<g class="lb"${trans ? " data-trans" : ""}${glow ? " data-glow" : ""}>${fills.join("")}<path class="lb-crease" d="${creases}" stroke="${edge}"/><path class="lb-edge" d="${outline}" stroke="${edge}"/></g>`;
+  return `<g class="lb"${trans ? " data-trans" : ""}${glow ? " data-glow" : ""}>${fills.join("")}<path class="lb-crease" d="${creases}" stroke="${edge}"/>${lit ? `<path class="lb-lit" d="${lit}"/>` : ""}<path class="lb-edge" d="${outline}" stroke="${edge}"/></g>`;
 }
 
 // Face builders. Every builder returns a list of 3D polygons for solidSvg.
@@ -152,24 +174,34 @@ export function frustumFaces(cx, cy, r0, z0, r1, z1, steps = 24) {
 }
 
 // A stud is cheap: a side band and a top ellipse, since a level circle projects to an ellipse.
-export function studSvg(cx, cy, z, color, projection, { r = STUD_R, h = STUD_H } = {}) {
+function studPaths(cx, cy, z, projection, { r = STUD_R, h = STUD_H } = {}) {
   const { sinE, k } = cameraOf(projection);
   const [sx, sy] = iso([cx, cy, z + h], projection);
   const [, by] = iso([cx, cy, z], projection);
   const rx = r * k;
   const ry = rx * sinE;
   const drop = by - sy;
-  const f = (value) => Math.round(value * 100) / 100;
+  // One decimal is plenty at this size, and studs are many: it keeps pages light.
+  const f = (value) => Math.round(value * 10) / 10;
   const side = `M${f(sx - rx)} ${f(sy)}v${f(drop)}a${f(rx)} ${f(ry)} 0 0 0 ${f(rx * 2)} 0v${f(-drop)}`;
   const top = `M${f(sx - rx)} ${f(sy)}a${f(rx)} ${f(ry)} 0 1 0 ${f(rx * 2)} 0a${f(rx)} ${f(ry)} 0 1 0 ${f(-rx * 2)} 0Z`;
-  const edge = edgeOf(color);
-  return `<path class="lb-stud" d="${side}Z" fill="${tone(color, 0.42)}"/><path class="lb-stud" d="${top}" fill="${tone(color, 0.86)}"/><path class="lb-edge" d="${side}${top}" stroke="${edge}"/>`;
+  return { side, top };
 }
+export function studSvg(cx, cy, z, color, projection, options) {
+  const { side, top } = studPaths(cx, cy, z, projection, options);
+  return `<path class="lb-stud" d="${side}Z" fill="${tone(color, 0.42)}"/><path class="lb-stud" d="${top}" fill="${tone(color, 0.86)}"/><path class="lb-edge" d="${side}${top}" stroke="${edgeOf(color)}"/>`;
+}
+// Many studs of one colour share their colours through the group, which keeps big plates light.
 export function studsSvg(points, color, projection, options) {
-  return [...points]
+  if (!points.length) return "";
+  const studs = [...points]
     .sort((a, b) => depthOf(a, projection) - depthOf(b, projection))
-    .map(([x, y, z]) => studSvg(x, y, z, color, projection, options))
+    .map(([x, y, z]) => {
+      const { side, top } = studPaths(x, y, z, projection, options);
+      return `<path class="lb-ss" d="${side}Z"/><path class="lb-st" d="${top}"/><path class="lb-se" d="${side}${top}"/>`;
+    })
     .join("");
+  return `<g style="--ss:${tone(color, 0.42)};--st:${tone(color, 0.86)};--se:${edgeOf(color)}">${studs}</g>`;
 }
 
 // Pieces. Positions and sizes are on the LEGO grid: x, y, w, d in studs, z and h in plates.
@@ -367,7 +399,7 @@ export function splitByLane(pieces, y0, y1) {
 export function sceneSvg(pieces, projection, { shadows = false, ground = 3 * PLATE } = {}) {
   const count = new Map();
   const casts = (piece) => piece.shadow ?? (piece.box.z0 >= -0.05 && piece.box.z0 <= ground + 0.05 && piece.box.z1 - piece.box.z0 >= 8 && piece.kind !== "pipe" && piece.kind !== "hose" && !piece.float);
-  const defs = shadows ? `<defs><filter id="lb-soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>` : "";
+  const defs = `<defs>${SHEEN_DEFS}${shadows ? `<filter id="lb-soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.6"/></filter>` : ""}</defs>`;
   // Studs under a piece that sits on them can't be seen: leave them out.
   const covered = new Map();
   for (const piece of pieces) {
@@ -385,6 +417,8 @@ export function sceneSvg(pieces, projection, { shadows = false, ground = 3 * PLA
     })
     .join("");
 }
+// The gradient the sheen on upright faces uses; sceneSvg and lessonSvg put it in the page.
+export const SHEEN_DEFS = `<linearGradient id="lb-sheen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".2"/><stop offset=".55" stop-color="#ffffff" stop-opacity="0"/></linearGradient>`;
 // A soft shadow under a piece, its footprint a little larger and shifted away from the light.
 function shadowSvg(piece, projection) {
   const { x0, y0, x1, y1, z0 } = piece.box;
@@ -400,9 +434,14 @@ export const BRICK_CSS = `
 .lb .lb-edge,.lb-edge{fill:none;stroke-width:.9;stroke-linejoin:round;stroke-linecap:round}
 .lb .lb-crease{fill:none;stroke-width:.6;stroke-opacity:.55;stroke-linecap:round}
 .lb-stud{stroke:none}
+.lb-ss{fill:var(--ss);stroke:none}
+.lb-st{fill:var(--st);stroke:none}
+.lb-se{fill:none;stroke:var(--se);stroke-width:.9;stroke-linejoin:round;stroke-linecap:round}
 .lb[data-trans]>path:not(.lb-edge):not(.lb-crease){fill-opacity:.78}
 .lb-face{fill:none;stroke:#1b1b1b;stroke-width:.8;stroke-linecap:round}
 .lb-shadow{fill:#1c2630;fill-opacity:.24;stroke:none}
+.lb .lb-sheen{fill:url(#lb-sheen);stroke:none}
+.lb .lb-lit,.lb-lit{fill:none;stroke:#ffffff;stroke-opacity:.55;stroke-width:.9;stroke-linecap:round}
 .iso-svg .lb-hose{fill:none;stroke-linecap:butt;stroke-linejoin:round;vector-effect:none}
 .lb-ring{fill:none;stroke-width:.7;stroke-opacity:.6;stroke-linecap:round}
 `;

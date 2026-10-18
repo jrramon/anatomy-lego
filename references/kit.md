@@ -50,6 +50,8 @@ En la página, la lección incrusta el núcleo entero (`kitScript()`), así que 
 | `COLORS`, `colorOf(nombre)` | La paleta: `red`, `yellow`, `blue`, `green`, `bright-green`, `lime`, `white`, `black`, `light-gray`, `dark-gray`, `tan`, `dark-tan`, `brown`, `orange`, `azure`, `skin`, `trans-yellow` y `trans-clear`. Cualquier otro `#rrggbb` también vale. |
 | `LIGHT` | La dirección de la luz de folleto: arriba claro, la cara +y media y la cara +x oscura. |
 | `tone(color, intensidad)`, `edgeOf(color)`, `mix(a, b, t)` | El tono de una cara según cuánto mira a la luz, el color del contorno y la mezcla de dos colores. |
+| `shine(normal, view)`, `glossTone(color, normal, view, fuerza)` | El brillo del plástico: cuánto refleja una cara la luz hacia quien mira, y el tono con ese reflejo. Las caras planas (`solidSvg`) usan poca fuerza, para que un plano inclinado no se destiña; las curvas (`meshSvg`) usan más, y así las bolas, cabezas y cilindros tienen su franja de luz. |
+| `SHEEN_DEFS` | El degradado del lustre de las caras verticales. `sceneSvg` ya lo incluye en la página. |
 | `BRICK_CSS` | Los estilos de piezas, *studs*, caras, mangueras y anillos. `lessonHtml` ya los incluye. |
 
 ### Caras y sólidos
@@ -64,8 +66,8 @@ Una cara es una lista de puntos 3D. Un sólido es una lista de caras.
 | `cylinderFaces(cx, cy, r, z0, z1, steps = 24)` | Un cilindro vertical. |
 | `frustumFaces(cx, cy, r0, z0, r1, z1, steps = 24)` | Un cono truncado: pantallas, árboles, chimeneas. |
 | `extrudeFaces(profile, "x" \| "y", from, to)` | Un perfil empujado a lo largo de `x` (perfil en `[y, z]`) o de `y` (perfil en `[x, z]`): rampas, tejados, alas, cilindros tumbados. |
-| `solidSvg(faces, color, P, { trans, glow, crease = 28 })` | Dibuja un sólido **convexo**: rellena las caras visibles, marca aristas donde dos caras forman más de `crease` grados y dibuja el contorno. Para sólidos cóncavos, `meshSvg` de `lego-round`. |
-| `studSvg(cx, cy, z, color, P, { r, h })`, `studsSvg(points, color, P)` | Un *stud* suelto o varios, ordenados de atrás adelante. |
+| `solidSvg(faces, color, P, { trans, glow, crease = 28 })` | Dibuja un sólido **convexo**: rellena las caras visibles con su tono y su brillo, marca aristas donde dos caras forman más de `crease` grados, dibuja en claro las aristas donde la cara de arriba se junta con los lados (el canto que brilla), pone un lustre suave en las caras verticales de al menos 6 mm y dibuja el contorno. Para sólidos cóncavos, `meshSvg` de `lego-round`. |
+| `studSvg(cx, cy, z, color, P, { r, h })`, `studsSvg(points, color, P)` | Un *stud* suelto o varios, ordenados de atrás adelante. Los de `studsSvg` comparten sus colores en el grupo y van con un decimal, porque una placa base tiene cientos. |
 
 ### Piezas de escena
 

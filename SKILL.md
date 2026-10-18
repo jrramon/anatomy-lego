@@ -78,7 +78,7 @@ Las medidas son las de LEGO de verdad, en milímetros: un *stud* mide 8 de ancho
 | `studSvg(cx, cy, z, color, P)` | Un *stud* suelto. |
 | `sceneSvg(pieces, P, { shadows })` | Ordena todas las piezas (las de detrás primero) y las envuelve para los pasos. Con `shadows: true`, lo que está de pie sobre el suelo proyecta una sombra suave. No dibuja los *studs* que tapa otra pieza. |
 
-Cualquier pieza acepta `step`, el paso en que aparece; `until`, el último paso en que se ve (una manguera que se retira); e `id`, que pasa a `data-id` y sirve para clics y estilos. Colores: `red`, `yellow`, `blue`, `green`, `bright-green`, `lime`, `white`, `black`, `light-gray`, `dark-gray`, `tan`, `dark-tan`, `brown`, `orange`, `azure`, `skin`, `trans-yellow` y `trans-clear`, o cualquier `#rrggbb`. El sombreado es el de los folletos de instrucciones: arriba claro, la cara +y media y la cara +x oscura, con contorno fino.
+Cualquier pieza acepta `step`, el paso en que aparece; `until`, el último paso en que se ve (una manguera que se retira); e `id`, que pasa a `data-id` y sirve para clics y estilos. Colores: `red`, `yellow`, `blue`, `green`, `bright-green`, `lime`, `white`, `black`, `light-gray`, `dark-gray`, `tan`, `dark-tan`, `brown`, `orange`, `azure`, `skin`, `trans-yellow` y `trans-clear`, o cualquier `#rrggbb`. El sombreado es el de los folletos de instrucciones (arriba claro, la cara +y media y la cara +x oscura, con contorno fino) con el brillo del plástico: un reflejo en las piezas redondas, el canto de arriba claro y un lustre suave en las paredes.
 
 ### `kit/lego-city.mjs`: LEGO City listo para usar
 
