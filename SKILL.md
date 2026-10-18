@@ -67,7 +67,7 @@ Las medidas son las de LEGO de verdad, en milímetros: un *stud* mide 8 de ancho
 | `round({ x, y, z, w, h, color, studs, trans, steps })` | Ladrillo o placa redonda de diámetro `w`. Se puede colocar en medio *stud* (`x: 4.5`). |
 | `custom({ faces, color, extra, box })` | Cualquier sólido convexo, a partir de caras. `extra(P)` añade dibujo encima, como la señal del rayo. |
 | `group({ parts })` | Varias piezas que se ordenan como una sola, listadas de atrás adelante. |
-| `minifig({ x, y, z, torso, legs, hair, hat, facing })` | Una minifigura con ojos y sonrisa, mirando hacia +y o hacia +x (`facing: "x"`). Con `legs: null` está sentada, con la cintura a la altura `z`. |
+| `minifig({ x, y, z, torso, legs, hair, hat, facing })` | En `kit/lego-figure.mjs`. Una minifigura como la de verdad: pies, cadera, brazos con hombro redondo, manos en C, cabeza redondeada con cejas, ojos y sonrisa. Mira hacia +y o hacia +x (`facing: "x"`). Con `legs: null` está sentada, con la cintura a la altura `z` y las manos al frente. |
 | `pipe({ axis: "x" \| "y" \| "z", from, to, at, r, color })` | Tubería recta en milímetros. `at` son las otras dos coordenadas. Los codos son un `round` de 1×1 en la esquina. |
 | `boxFaces`, `cylinderFaces`, `frustumFaces`, `extrudeFaces(profile, "x" \| "y", from, to)`, `prismFaces` | Constructores de caras, en milímetros: cajas, cilindros, conos y pantallas, rampas y cuñas, cilindros tumbados (ruedas, ejes) y prismas. |
 | `solidSvg(faces, color, P)` | Dibuja un sólido suelto, fuera de la escena, por ejemplo el buje del molino. |

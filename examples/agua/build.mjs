@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import * as k from "../../kit/iso-kit.mjs";
 import * as b from "../../kit/brick.mjs";
 import * as l from "../../kit/lesson.mjs";
+import * as fig from "../../kit/lego-figure.mjs";
 import { auditOrExit } from "../../kit/lego-audit.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -136,7 +137,7 @@ add(4, onWall(45.8, 46.8, 5, 8, "#9fd8f0"));
 add(4, pipeUp(TAP_X, WALL_Y * STUD + 2, GROUND, TAP_Z + 2, "blue", 1.6));
 add(4, b.custom({ faces: b.boxFaces(TAP_X - 4, WALL_Y * STUD + 0.4, 4.4 * PLATE, TAP_X + 4, WALL_Y * STUD + 4.6, 6.2 * PLATE), color: "white", overlaps: true }));
 for (let y = WALL_Y; y < DEEP; y++) add(4, b.tile({ x: 43, y, w: 2, d: 1, z: 1, color: "tan" }));
-add(4, b.minifig({ x: 51.6, y: 20.4, z: 1, torso: "yellow", legs: "dark-gray", hair: "black" }));
+add(4, fig.minifig({ x: 51.6, y: 20.4, z: 1, torso: "yellow", legs: "dark-gray", hair: "black" }));
 
 // Step 5: the tap with its red handle, and a bucket under it.
 add(5, pipeY(WALL_Y * STUD + 2, WALL_Y * STUD + 9, TAP_X, TAP_Z, "light-gray", 1.6));

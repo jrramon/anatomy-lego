@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import * as k from "../../kit/iso-kit.mjs";
 import * as b from "../../kit/brick.mjs";
 import * as l from "../../kit/lesson.mjs";
+import * as fig from "../../kit/lego-figure.mjs";
 import { auditOrExit } from "../../kit/lego-audit.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -133,7 +134,7 @@ const lamp = (cx) => {
   add(4, b.round({ x, y: 18, z: 26, w: 1, h: 1, color: "azure", studs: false, steps: 16, id: "eye" }));
 };
 LAMPS.forEach(lamp);
-add(4, b.minifig({ x: 46, y: 16.6, z: SIDEWALK_H, torso: "red", legs: "blue", hair: "brown" }));
+add(4, fig.minifig({ x: 46, y: 16.6, z: SIDEWALK_H, torso: "red", legs: "blue", hair: "brown" }));
 
 auditOrExit(pieces);
 

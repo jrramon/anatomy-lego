@@ -6,6 +6,7 @@ import * as b from "../../kit/brick.mjs";
 import * as r from "../../kit/lego-round.mjs";
 import * as t from "../../kit/lego-tube.mjs";
 import * as l from "../../kit/lesson.mjs";
+import * as fig from "../../kit/lego-figure.mjs";
 import { auditOrExit } from "../../kit/lego-audit.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -79,7 +80,7 @@ add(pieces, 0, b.custom({ faces: b.boxFaces(6 * STUD, STUD - GAP, 4 * PLATE, 14 
 );
 for (let i = 0; i < 3; i++) add(pieces, 0, r.wheel({ at: [2.5 * STUD, 2.5 * STUD + 0.1, FLOOR + 4 + i * 8], axis: "z", r: 12, width: 8 }));
 add(pieces, 0, b.brick({ x: 31, y: 2, z: 1, w: 2, d: 1, h: 6, color: "red" }));
-add(pieces, 0, b.minifig({ x: 27, y: 16.6, z: 1, torso: "blue", legs: "dark-gray", hat: "red" }));
+add(pieces, 0, fig.minifig({ x: 27, y: 16.6, z: 1, torso: "blue", legs: "dark-gray", hat: "red" }));
 
 // Step 1: the kart on its four stands. A red chassis with a hole for the engine, four wheels on two
 // axles, a seat and a seated driver facing forward, a steering wheel and a nose.
@@ -96,7 +97,7 @@ add(front, 1, r.wheel({ at: [FRONT_X, FAR_Y, AXLE_Z], axis: "y", r: WHEEL_R, wid
 add(front, 1, r.wheel({ at: [FRONT_X, NEAR_Y, AXLE_Z], axis: "y", r: WHEEL_R, width: WHEEL_W }));
 add(front, 1, b.brick({ x: 17, y: 8, z: 2 + STAND, w: 2, d: 4, h: 2, color: "dark-gray", studs: false }));
 add(front, 1, b.brick({ x: 16, y: 8, z: 2 + STAND, w: 1, d: 4, h: 6, color: "dark-gray", studs: false }));
-add(front, 1, b.minifig({ x: 17.8, y: 10, z: 4 + STAND, torso: "yellow", hat: "white", legs: null, facing: "x" }));
+add(front, 1, fig.minifig({ x: 17.8, y: 10, z: 4 + STAND, torso: "yellow", hat: "white", legs: null, facing: "x" }));
 add(front, 1, b.pipe({ axis: "z", from: CHASSIS + PLATE, to: CHASSIS + 26, at: [20.6 * STUD, 10 * STUD], r: 1, color: "dark-gray" }));
 add(front, 1, r.turned({ profile: [[0, 0], [0, 6], [2, 6], [2, 0]], at: [20.6 * STUD - 2, 10 * STUD, CHASSIS + 26], axis: "x", color: "black", steps: 20, kind: "steering", overlaps: true }));
 add(front, 1, r.turned({ profile: [[0, 0], [0, 8], [6, 7], [12, 4], [14, 0]], at: [22 * STUD - GAP, 10 * STUD, CHASSIS + 1.6], axis: "x", color: "red", steps: 24, kind: "nose", overlaps: true }));
