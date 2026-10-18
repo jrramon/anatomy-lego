@@ -77,7 +77,7 @@ add(pieces, 0, b.custom({ faces: b.boxFaces(6 * STUD, STUD - GAP, 4 * PLATE, 14 
 [[7.4, 7.6, "dark-gray"], [9.2, 9.6, "red"], [11, 10.6, "dark-gray"], [12.6, 8, "blue"]].forEach(([x, top, color]) =>
   add(pieces, 0, b.custom({ faces: b.boxFaces(x * STUD, STUD + 0.6, 6 * PLATE, x * STUD + 2.4, STUD + 2.2, top * PLATE), color, overlaps: true })),
 );
-for (let i = 0; i < 3; i++) add(pieces, 0, r.wheel({ at: [3 * STUD, 4 * STUD, FLOOR + 4 + i * 8], axis: "z", r: 12, width: 8 }));
+for (let i = 0; i < 3; i++) add(pieces, 0, r.wheel({ at: [2.5 * STUD, 2.5 * STUD + 0.1, FLOOR + 4 + i * 8], axis: "z", r: 12, width: 8 }));
 add(pieces, 0, b.brick({ x: 31, y: 2, z: 1, w: 2, d: 1, h: 6, color: "red" }));
 add(pieces, 0, b.minifig({ x: 27, y: 16.6, z: 1, torso: "blue", legs: "dark-gray", hat: "red" }));
 
@@ -131,6 +131,12 @@ add(back, 5, b.pipe({ axis: "x", from: E[0] - 20.4, to: E[0] - 10, at: [E[1], HE
 
 auditOrExit([...pieces, ...back, ...front, ...engine]);
 
+// The kart drives along x in the band its wheels cover. What stands in front of that band is drawn
+// after the kart; nothing that stays in the last step may stand inside it.
+const lane = b.splitByLane(pieces, FAR_Y - WHEEL_W / 2, NEAR_Y + WHEEL_W / 2);
+const blocking = lane.inLane.filter((piece) => piece.box.z1 > FLOOR + 0.05 && piece.until === undefined);
+if (blocking.length) throw new Error(`en el camino del kart: ${blocking.map((piece) => piece.kind).join(", ")}`);
+
 const P = k.fitProjection(
   [...k.boxCorners({ x: 0, y: 0, w: LONG * STUD, d: DEEP * STUD, r: 0 }, -EARTH * PLATE, 0), [0, 0, 13 * PLATE], [E[0], E[1], HEAD_TOP + 24]],
   WIDTH,
@@ -161,7 +167,7 @@ const topPieces = engine.filter((p) => p !== cylinderPiece && p !== crankPiece);
 const body = [
   `<defs>${l.GLOW_DEFS}<radialGradient id="lb-boom"><stop offset="0" stop-color="#fff3a0" stop-opacity=".95"/><stop offset=".5" stop-color="#ff9a1f" stop-opacity=".75"/><stop offset="1" stop-color="#ff5a00" stop-opacity="0"/></radialGradient>
     ${l.tokenDef("air", P, { color: "#ffffff", r: 1.5, h: 1 })}${l.tokenDef("fuel", P, { color: "#ff9a1f", r: 1.1, h: 0.8 })}${l.tokenDef("burnt", P, { color: "#7d838b", r: 1.6, h: 1 })}${l.tokenDef("smoke", P, { color: "#c3c8ce", r: 3, h: 1.4 })}</defs>`,
-  `<g class="lb-scene">${b.sceneSvg(pieces, P)}</g>`,
+  `<g class="lb-scene">${b.sceneSvg(lane.behind, P)}</g>`,
   `<g data-part="kart">
     ${kartPieces(back)}
     ${kartPieces([crankPiece])}
@@ -180,6 +186,7 @@ const body = [
     <g class="lb-piece" data-step="1" style="--i:20"><path data-part="spoke" class="lb-spoke"/></g>
     <g data-part="kart-tokens"></g>
   </g>`,
+  `<g class="lb-scene">${b.sceneSvg(lane.ahead, P)}</g>`,
 ];
 
 const svg = l.lessonSvg({

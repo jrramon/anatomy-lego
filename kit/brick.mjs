@@ -350,6 +350,15 @@ export function orderPieces(pieces, projection) {
   return order;
 }
 
+// For something that moves along x through the band y0..y1 (a kart, a plane on its runway) and is
+// drawn above the scene: the pieces wholly in front of the band must be drawn after it, or it will
+// slide over them. Pieces inside the band are in its way.
+export function splitByLane(pieces, y0, y1) {
+  const ahead = pieces.filter((piece) => piece.box.y0 >= y1 - 1e-6);
+  const inLane = pieces.filter((piece) => piece.box.y1 > y0 + 1e-6 && piece.box.y0 < y1 - 1e-6);
+  return { behind: pieces.filter((piece) => !ahead.includes(piece)), ahead, inLane };
+}
+
 // The whole scene in painter's order. Each piece is wrapped so a lesson can hide it until its
 // building step, then drop it into place.
 export function sceneSvg(pieces, projection) {

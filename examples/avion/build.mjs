@@ -131,6 +131,9 @@ addPlane(2, b.custom({ faces: b.cylinderFaces(76, 6 * STUD, 2.4, 31.4, 35.6, 12)
 
 auditOrExit([...pieces, ...plane]);
 
+// The plane rolls along x over the runway: what stands in front of its wingtips is drawn after it.
+const lane = b.splitByLane(pieces, WING.y0, WING.y1);
+
 const P = k.fitProjection(
   [...k.boxCorners({ x: 0, y: 0, w: LONG * STUD, d: DEEP * STUD, r: 0 }, -EARTH * PLATE, 0), [LONG * STUD - 40, FY, 130], [0, 0, 100]],
   WIDTH,
@@ -156,12 +159,13 @@ const windowsSvg = WINDOWS.map((x, i) => {
 
 const body = [
   `<defs>${l.tokenDef("air", P, { color: "#ffffff", r: 1.7, h: 1.2 })}${l.tokenDef("fuel", P, { color: "#ff9a1f", r: 1.2, h: 1 })}</defs>`,
-  `<g class="lb-scene">${b.sceneSvg(pieces, P)}</g>`,
+  `<g class="lb-scene">${b.sceneSvg(lane.behind, P)}</g>`,
   `<g data-part="plane" data-id="plane">
     ${b.sceneSvg(plane, P)}
     <g class="lb-piece" data-step="1" style="--i:12">${windowsSvg}<g data-part="prop"><path/><path/></g></g>
     <g data-part="plane-tokens" class="lb-air"></g>
   </g>`,
+  `<g class="lb-scene">${b.sceneSvg(lane.ahead, P)}</g>`,
   `<g data-part="tokens"></g>`,
 ];
 
