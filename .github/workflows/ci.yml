@@ -76,6 +76,9 @@ jobs:
       - name: Motor (LEGO)
         run: node examples/motor/build.mjs --audit
 
+      - name: Día y noche (LEGO)
+        run: node examples/dia-noche/build.mjs --audit
+
       - name: Committed pages are unchanged
         run: |
           git status --short

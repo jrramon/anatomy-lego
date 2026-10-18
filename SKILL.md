@@ -9,13 +9,15 @@ compatibility: Escrita para Claude Code. Necesita Node.js 20.10+, y Chrome o Chr
 
 Esta skill convierte una pregunta de un niño pequeño en una **escena LEGO City que se construye paso a paso** mientras un adulto cuenta la historia. El niño no lee: mira, señala, contesta y toca. El adulto lee en voz alta lo que pone en «Dile», hace la pregunta de «Pregúntale» y, si quiere saber más, tiene la explicación de verdad en «Para mamá o papá».
 
-Hay cuatro ejemplos completos. Abre el más parecido antes de empezar y cópialo como plantilla:
+Hay cinco ejemplos completos. Abre el más parecido antes de empezar y cópialo como plantilla:
 - `examples/farola/`: «¿Cómo llega la luz a la farola?». Flujos que dependen del día y la noche, y cable en el corte de tierra.
 - `examples/agua/`: «¿De dónde sale el agua del grifo?». Tuberías (`pipe`), piezas que cambian de color por el camino y la demanda del pueblo frente a la de la casa.
 - `examples/avion/`: «¿Por qué vuela un avión?». Un objeto que se mueve por la escena con su propio aire, que también se mueve con él. Usa piezas redondas (fuselaje, ruedas, cúpula), una manguera que solo aparece en un paso (`until`) y un modelo físico con un caso que falla a propósito (demasiado peso).
 
 - `examples/agua/` y `examples/motor/` usan además `lego-fx`: brillos y anillos de lluvia en el embalse, y una llama y humo de verdad en el motor.
 - `examples/motor/`: «¿Cómo funciona el motor de un coche?». Un mecanismo por dentro: un cilindro de cristal casi transparente, piezas vivas (pistón, biela, válvulas) movidas por un único ángulo, y una carga de piezas que se aprieta y cambia de color según el tiempo del motor. También un piloto sentado (`minifig({ legs: null, facing: "x" })`) y soportes que se retiran (`until`) para que el kart arranque.
+
+- `examples/dia-noche/`: «¿Por qué hay día y noche?». Una pieza que gira de verdad (`lego-spin`): la Tierra de ladrillo con continentes, iluminada por el Sol de la escena, con una casa cuyas ventanas se encienden de noche. Se puede arrastrar con el ratón.
 
 Cada uno se construye con `node examples/<nombre>/build.mjs`, que escribe la página junto al script. Con `--audit` pasa además la auditoría.
 
@@ -118,6 +120,18 @@ Efectos que se dibujan con WebGL sobre el SVG, en la misma cámara y en bandas d
 | `smoke({ id, at, drift, size, occluders })` | Bocanadas de humo que salen de un punto y suben siguiendo `drift`. |
 
 En la página: `lesson.fx.level(id, 0..1)` enciende o apaga un efecto y `lesson.fx.offset(id, [x, y, z])` lo mueve con un grupo que se desplaza (el kart). **`occluders`** son las cajas `[x0, y0, z0, x1, y1, z1]` de las piezas que quedan delante del efecto: el lienzo va encima de todo el SVG, así que sin ellas el agua se pintaría encima de la presa. Pon siempre las que tapan el efecto y compruébalo en una captura.
+
+### `kit/lego-spin.mjs`: piezas que giran
+
+Para cuando el giro **es** la explicación: un planeta, una rueda de palas, un engranaje. El grupo se vuelve a dibujar en cada fotograma, girado sobre su eje, con el mismo sombreado de folleto. Si no hace falta ver otra cara, basta con `translateAlong` o con una marca que gira, como la raya de la rueda del kart.
+
+| Función | Qué hace |
+|---|---|
+| `spinData(meshes, { pivot, axis, sun })` | Prepara el grupo. `meshes` es `[{ color, faces, name? }]`; las caras llevan `points` y `normal` (las de `revolveFaces` ya las traen; para las de `boxFaces` y compañía usa `withNormals`) y pueden llevar `color` propio y `lamp: true`. Con `sun`, el lado que no mira a ese punto se oscurece y las caras `lamp` se encienden allí. |
+| `spinSvg(id)` | El grupo vacío que va en la escena. Se pasa a `lessonHtml({ spins: { id: datos } })`. |
+| `withNormals(polys)` | Normales hacia fuera para un sólido convexo. |
+
+En la página, `lesson.spin(id)` devuelve `{ angle, set(ángulo), show(nombre, sí/no), lit(punto, normal) }`. Todas las mallas de un grupo se ordenan juntas, así que una casa encima de un planeta se esconde detrás de él: pon en el mismo grupo lo que gira junto y usa `show` para que cada parte aparezca en su paso. El día y la noche se deciden por la posición en el cuerpo que gira, no por hacia dónde mira cada cara.
 
 ### `kit/lesson.mjs`: la página
 

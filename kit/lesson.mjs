@@ -2,6 +2,7 @@ import { cameraOf, figureSvg, iso, pageHtml, plateHtml } from "./iso-kit.mjs";
 import { BRICK_CSS, studSvg } from "./brick.mjs";
 import { kitScript } from "../scripts/inline-kit.mjs";
 import { FX_CSS, fxCamera, fxFragment, fxRuntime } from "./lego-fx.mjs";
+import { spinRuntime } from "./lego-spin.mjs";
 
 // A LEGO lesson: one scene that builds up step by step while a grown-up tells the story.
 // Each step is { say, ask, note, night }: what to say out loud, what to ask the child, a true
@@ -48,8 +49,9 @@ export function lessonSvg({ width, height, label, body }) {
 }
 
 // The page: the card, the step buttons, the lesson's own buttons, and the three texts.
-// `fx` is an optional list of effects from lego-fx.mjs, drawn by WebGL over the SVG.
-export function lessonHtml({ title, svg, steps, buttons = [], keys = "", projection, script = "", css = "", fx = [] }) {
+// `fx` is an optional list of effects from lego-fx.mjs, drawn by WebGL over the SVG. `spins` maps the
+// id of each spinning group (lego-spin.mjs spinSvg) to its spinData; the page gets lesson.spin(id).
+export function lessonHtml({ title, svg, steps, buttons = [], keys = "", projection, script = "", css = "", fx = [], spins = {} }) {
   const total = steps.length;
   const stage = fx.length ? `<div class="lb-stage">${svg}<canvas class="lb-fx" aria-hidden="true"></canvas></div>` : svg;
   const plate = plateHtml({ fig: `Paso 1 de ${total}`, title, hint: "", readout: "", body: stage });
@@ -72,7 +74,13 @@ export function lessonHtml({ title, svg, steps, buttons = [], keys = "", project
     ? `const fxView = document.querySelector(".lb-lesson svg").viewBox.baseVal;
 lesson.fx = (${fxRuntime.toString()})({ canvas: document.querySelector(".lb-fx"), fragment: ${JSON.stringify(fxFragment(fx))}, view: [fxView.width, fxView.height], camera: ${JSON.stringify(fxCamera(projection))}, effects: ${JSON.stringify(fx)} }) ?? lesson.fx;\n`
     : "";
-  const runtime = `${kitScript()}\nconst lesson = (${lessonRuntime.toString()})(${JSON.stringify({ steps, projection })});\n${effects}${script}\nlesson.start();`;
+  const turning = Object.keys(spins).length
+    ? `const spinOf = ${spinRuntime.toString()};
+const spinning = Object.fromEntries(Object.entries(${JSON.stringify(spins)}).map(([id, data]) => [id, spinOf(document.querySelector('[data-spin="' + id + '"]'), data, ${JSON.stringify(projection)})]));
+lesson.spin = (id) => spinning[id];
+Object.values(spinning).forEach((spin) => spin.set(0));\n`
+    : "";
+  const runtime = `${kitScript()}\nconst lesson = (${lessonRuntime.toString()})(${JSON.stringify({ steps, projection })});\n${effects}${turning}${script}\nlesson.start();`;
   return pageHtml({ title, theme: "light", body: `<style>${BRICK_CSS}${LESSON_CSS}${fx.length ? FX_CSS : ""}${css}</style>${page}`, script: runtime, width: 1040 }).replace('<html lang="en">', '<html lang="es">');
 }
 
