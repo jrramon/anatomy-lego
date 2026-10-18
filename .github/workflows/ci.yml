@@ -35,6 +35,9 @@ jobs:
       - name: Farola (LEGO)
         run: node examples/farola/build.mjs
 
+      - name: Agua del grifo (LEGO)
+        run: node examples/agua/build.mjs
+
       - name: Dial indicator
         run: |
           node examples/dial-indicator/build.mjs

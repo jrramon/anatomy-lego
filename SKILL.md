@@ -61,6 +61,7 @@ Las medidas son las de LEGO de verdad, en milímetros: un *stud* mide 8 de ancho
 | `custom({ faces, color, extra, box })` | Cualquier sólido convexo, a partir de caras. `extra(P)` añade dibujo encima, como la señal del rayo. |
 | `group({ parts })` | Varias piezas que se ordenan como una sola, listadas de atrás adelante. |
 | `minifig({ x, y, z, torso, legs, hair, hat })` | Una minifigura mirando hacia +y, con ojos y sonrisa. |
+| `pipe({ axis: "x" \| "y" \| "z", from, to, at, r, color })` | Tubería recta en milímetros. `at` son las otras dos coordenadas. Los codos son un `round` de 1×1 en la esquina. |
 | `boxFaces`, `cylinderFaces`, `frustumFaces`, `extrudeFaces(profile, "x" \| "y", from, to)`, `prismFaces` | Constructores de caras, en milímetros: cajas, cilindros, conos y pantallas, rampas y cuñas, cilindros tumbados (ruedas, ejes) y prismas. |
 | `solidSvg(faces, color, P)` | Dibuja un sólido suelto, fuera de la escena, por ejemplo el buje del molino. |
 | `studSvg(cx, cy, z, color, P)` | Un *stud* suelto. |
@@ -100,6 +101,8 @@ lesson.night, lesson.dark, lesson.ease(desde, hasta, dt, tau)
 - **Que parezca LEGO de verdad.** Piezas de medidas reales, con *studs*. Separaciones de 0,1 entre piezas, que el kit ya pone. Placas base verdes, calles de *tiles* gris oscuro, aceras gris claro y minifiguras a escala: una minifigura mide unos 4 ladrillos. Árboles, flores y alguna minifigura dan vida, pero sin tapar la cadena.
 - **Una cosa importante a la vista.** Lo que hay que mirar en cada paso no puede quedar escondido detrás de otra pieza. Si algo va bajo tierra, va en la cara de corte delantera.
 - **Las piezas no se atraviesan.** El orden de pintado se basa en que las cajas de las piezas no se cruzan. Si dos se cruzan (un brazo que atraviesa un poste), pártelas o usa `group`. Lo que cruza la escena de lado a lado (cables, aspas) no va como pieza: va encima, en un grupo propio.
+- **Lo que viaja, más pequeño que su tubo.** Una pieza viajera más ancha que la tubería o el cable la tapa: usa `r` de 1,6 en tuberías finas y de 2,6-3,2 en las gruesas o en cables al aire.
+- **Cada cosa aparece en su paso.** Lo que pertenece a algo (el camino de la casa, el contador de la pared) va en el mismo `step` que ese algo, no en el paso 0.
 - **Colores con intención.** Los colores básicos de LEGO City. El amarillo brillante queda reservado para lo que viaja, para que el niño lo siga con el dedo.
 - **Movimiento tranquilo.** Seguimiento exponencial (`lesson.ease`), nada brusco, nada que aparezca de golpe: las rutas ya se desvanecen en los extremos. Con movimiento reducido, todo queda quieto en su estado final.
 - **Causa y efecto honestos.** Lo que pasa al pulsar un botón tiene que ser verdad o estar matizado en la nota para padres.

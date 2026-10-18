@@ -217,6 +217,12 @@ export function custom({ faces, color, trans = false, glow = false, extra, ...re
     svg: (P) => solidSvg(faces, color, P, { trans, glow }) + (extra ? extra(P) : ""),
   };
 }
+// A straight pipe in millimetres, along "x", "y" or "z" from `from` to `to`, through the point
+// `at` = the other two coordinates ([y, z] for "x", [x, z] for "y", [x, y] for "z").
+export function pipe({ axis, from, to, at: [a, c], r = 2.4, color = "blue", steps = 14, ...rest }) {
+  const faces = axis === "z" ? cylinderFaces(a, c, r, from, to, steps) : extrudeFaces(circleOf(a, c, r, steps), axis, from, to);
+  return custom({ faces, color, ...rest });
+}
 // Several solids that move and sort as one piece (a minifigure, a lamp head), listed back to front.
 export function group({ parts, box, ...rest }) {
   const boxes = parts.map((part) => part.box);
