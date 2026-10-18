@@ -161,7 +161,8 @@ export function building({ x, y, w, d = 4, z = 1, floors = 2, floorH = 4, color 
         out.push(onFace(wx + 0.1, wx + 1.9, base, base + storey - 3, "#2b4a6b", 0.7));
         continue;
       }
-      const [z0, z1] = [base + 3, base + storey - 2.4];
+      // With a sign, the top floor's windows are shorter, leaving a band for the sign under the cornice.
+      const [z0, z1] = [base + 3, base + storey - (sign && f === floors - 1 ? 5.2 : 2.4)];
       out.push(onFace(wx - 0.2, wx + 2.2, z0 - 0.4, z1 + 0.4, trim, 0.4));
       out.push({ ...onFace(wx + 0.1, wx + 1.9, z0, z1, "#9fd2ea", 0.7), id: "window" });
       out.push(onFace(wx - 0.4, wx + 2.4, z0 - 0.8, z0 - 0.2, trim, 1.6));
@@ -177,8 +178,8 @@ export function building({ x, y, w, d = 4, z = 1, floors = 2, floorH = 4, color 
     }
   }
   if (sign) {
-    const sz = z + floors * storey - 4.4;
-    out.push(onFace(x + w / 2 - 2.2, x + w / 2 + 2.2, sz, sz + 3.4, sign.color ?? "red", 0.8, (P) => signSymbol(sign.symbol, (x + w / 2) * STUD, face + 0.85, (sz + 1.7) * PLATE, P)));
+    const sz = z + floors * storey - 4.2;
+    out.push(onFace(x + w / 2 - 2.6, x + w / 2 + 2.6, sz, sz + 3.4, sign.color ?? "red", 0.8, (P) => signSymbol(sign.symbol, (x + w / 2) * STUD, face + 0.85, (sz + 1.7) * PLATE, P)));
   }
   return out;
 }
