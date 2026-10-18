@@ -9,7 +9,7 @@ Todo lo que usan las lecciones, por capas. Abajo está el núcleo isométrico, `
 2. Piezas: `brick.mjs`
 3. Piezas redondas: `lego-round.mjs`
 4. Mangueras, tubos y cables: `lego-tube.mjs`
-5. Minifiguras: `lego-figure.mjs`
+5. Minifiguras: `lego-figure.mjs`, y LEGO City: `lego-city.mjs`
 6. Piezas que giran: `lego-spin.mjs`
 7. Efectos WebGL: `lego-fx.mjs`
 8. Auditoría: `lego-audit.mjs`
@@ -94,8 +94,8 @@ Cada pieza lleva también `kind`, `color` y, si es de rejilla, `grid` (`circle` 
 
 | Función | Qué hace |
 |---|---|
-| `sceneSvg(pieces, P)` | Ordena las piezas y envuelve cada una en `<g class="lb-piece" data-step data-until data-id>`, que es lo que hace que caigan en su paso. |
-| `orderPieces(pieces, P)` | Solo el orden. Donde dos piezas se solapan en pantalla y están separadas en algún eje, la de más cerca va después; si no se separan en ninguno, decide la profundidad del centro. Supone que **las cajas de las piezas no se atraviesan**. |
+| `sceneSvg(pieces, P, { shadows = false, ground = 3 placas })` | Ordena las piezas y envuelve cada una en `<g class="lb-piece" data-step data-until data-id>`, que es lo que hace que caigan en su paso. Con `shadows`, las piezas de pie hasta la altura `ground` proyectan una sombra suave de contacto (una pieza decide con `shadow: true/false`). No dibuja los *studs* tapados por otra pieza apoyada encima. |
+| `orderPieces(pieces, P)` | Solo el orden. Donde dos piezas se solapan en pantalla y están separadas en algún eje, la de más cerca va después; si no se separan en ninguno, decide la profundidad del centro. Si piezas que se atraviesan forman un ciclo, se agrupa (componentes fuertemente conexas) y se resuelve por profundidad solo entre sus miembros, sin desordenar el resto. Aun así, **evita que las cajas se atraviesen**. |
 | `splitByLane(pieces, y0, y1)` | Para algo que se mueve a lo largo de `x` en la franja `y0…y1` y se dibuja encima de la escena: `{ behind, ahead, inLane }`. `behind` va antes del vehículo, `ahead` después, y en `inLane` no debería quedar nada con lo que choque. |
 
 ## 3. Piezas redondas: `lego-round.mjs`
@@ -130,7 +130,23 @@ En una cámara isométrica un tubo se ve igual de ancho en todas partes, así qu
 
 | Función | Qué hace |
 |---|---|
-| `minifig({ x, y, z, torso = "red", legs = "blue", hair = "brown", hat, facing = "y", skin = "skin" })` | Una minifigura con medidas reales: piernas con pie, banda de cadera, torso, brazos con hombro redondo, manos en C, cuello y cabeza redondeada con cejas, ojos y sonrisa. Mira hacia +y (`facing: "y"`) o hacia +x (`"x"`). Con `legs: null` está sentada: la cintura queda a la altura `z` y las manos van al frente. Con `hat` lleva gorra; con `hair: null` y sin gorra, el *stud* hueco de la cabeza clásica. Mide unos 40 mm, unos 4 ladrillos. |
+| `minifig({ x, y, z, torso = "red", legs = "blue", hair = "brown", hat, facing = "y", skin = "skin", print, hairStyle = "short", hatStyle = "cap", child })` | Una minifigura con medidas reales: piernas con pie, banda de cadera, torso, brazos con hombro redondo, manos en C, cuello y cabeza redondeada con cejas, ojos y sonrisa. Mira hacia +y (`facing: "y"`) o hacia +x (`"x"`). Con `legs: null` está sentada: la cintura queda a la altura `z` y las manos van al frente. Con `hat` lleva gorra; con `hair: null` y sin gorra, el *stud* hueco de la cabeza clásica. Mide unos 40 mm, unos 4 ladrillos. `print` estampa el torso (`jacket`, `shirt`, `apron`, `police`, `hivis`); `hairStyle` es `short`, `ponytail` o `tall`; con `hat`, `hatStyle` es `cap`, `helmet`, `chef` o `police`; `child: true` le da piernas cortas. |
+
+### LEGO City: `lego-city.mjs`
+
+Conjuntos ya montados, cada uno devuelve una lista de piezas. `ROAD` y `PAVEMENT` son los grises de carretera y acera.
+
+| Función | Qué hace |
+|---|---|
+| `road({ x, y, w, d, z = 0, along = "x", dashes = true, skip })` | Placa de carretera gris claro con línea central discontinua. `skip: [desde, hasta]` deja un tramo sin rayas. Las marcas son pintura: llevan `overlaps`. |
+| `crossing({ x, y, w, d, z, along })` | Paso de cebra sobre la carretera. |
+| `sidewalk({ x, y, w, d, z, h = 2, color })` | Acera de baldosas de 2×2, a la altura del bordillo. |
+| `building({ x, y, z = 1, w, d = 4, floors = 2, floorH = 4, color = "tan", trim = "white", awning, sign, door = 1 })` | Fachada que mira hacia +y: ladrillos por plantas con una banda del color `trim`, ventanas enmarcadas con alféizar, puerta en el hueco `door`, cornisa y tejado. `awning` es el color del toldo de rayas; `sign` es `{ symbol: "pizza" \| "cup" \| "cross", color }`. Las ventanas llevan `data-id="window"`. |
+| `tree({ x, y, z = 1, size, color })`, `bush({ x, y, z, size })`, `flowers(spots)` | Árbol de tronco redondo y copa de bolas de hojas, arbusto de tres bolas, flores de placas redondas (`[x, y, color]`). |
+| `bench`, `bin`, `hydrant` (`{ x, y, z = 2 }`) | Banco que mira hacia +y, papelera y boca de incendios, sobre la acera. |
+| `car({ x, y, z = 1, color })` | Coche de 8×4 *studs* con el morro hacia +x: ruedas, chasis, carrocería, parabrisas y faros. |
+| `dog({ x, y, z = 2, color })` | Un perro mirando hacia +x. |
+| `CITY_CSS` | Enciende las ventanas cuando la lección es de noche; añádelo al `css` de la lección. |
 
 ## 6. Piezas que giran: `lego-spin.mjs`
 

@@ -5,6 +5,7 @@ import * as k from "../../kit/iso-kit.mjs";
 import * as b from "../../kit/brick.mjs";
 import * as l from "../../kit/lesson.mjs";
 import * as fig from "../../kit/lego-figure.mjs";
+import * as city from "../../kit/lego-city.mjs";
 import { auditOrExit } from "../../kit/lego-audit.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -54,26 +55,32 @@ for (let row = 0; row < 2; row++) {
 }
 for (let x = 0; x < STREET; x += 10) for (let y = 0; y < DEEP; y += 10) add(0, b.plate({ x, y, w: 10, d: 10, color: "bright-green" }));
 add(0, b.plate({ x: STREET, y: 0, w: LONG - STREET, d: 4, color: "bright-green" }));
-add(0, b.tile({ x: STREET, y: 4, w: LONG - STREET, d: SIDEWALK - 4, color: "dark-gray" }));
-for (let x = STREET + 1; x < LONG - 1; x += 4)
-  add(0, b.custom({ faces: b.boxFaces(x * STUD, 8.75 * STUD, PLATE, (x + 2) * STUD, 9.25 * STUD, PLATE + 0.3), color: "white" }));
-for (let x = STREET; x < LONG; x += 2) for (let y = SIDEWALK; y < DEEP; y += 2) add(0, b.tile({ x, y, w: 2, d: 2, h: SIDEWALK_H, color: "light-gray" }));
+add(0, b.tile({ x: STREET, y: 0, z: 1, w: 20, d: 4, color: city.PAVEMENT }));
 
-// Scenery: pine trees and flowers on the grass.
-const tree = (x, y, size = 1) => {
-  add(0, b.round({ x, y, z: 1, w: 1, h: 3, color: "brown", studs: false }));
-  const cx = (x + 0.5) * STUD;
-  const cy = (y + 0.5) * STUD;
-  add(0, b.custom({ faces: b.frustumFaces(cx, cy, 13 * size, 4 * PLATE, 1.5, 4 * PLATE + 34 * size, 20), color: "green" }));
-};
-tree(16, 2, 1);
-tree(19, 4, 0.8);
-tree(38, 1, 0.9);
-tree(52, 1, 1.1);
-tree(1, 17, 0.75);
-[[13, 17, "red"], [14, 18, "yellow"], [18, 17, "red"], [3, 3, "yellow"], [9, 2, "red"], [33, 2, "yellow"], [46, 2, "red"], [20, 18, "yellow"]].forEach(([x, y, color]) =>
-  add(0, b.round({ x, y, z: 1, w: 1, h: 1, color })),
-);
+// The street, LEGO City style: a light grey road plate with a dashed line and a zebra crossing,
+// a sidewalk on each side, and shops along the far side.
+const CROSSING = [43, 47];
+const street = [
+  ...city.sidewalk({ x: STREET, y: 4, w: LONG - STREET, d: 2, h: SIDEWALK_H }),
+  ...city.road({ x: STREET, y: 6, w: LONG - STREET, d: SIDEWALK - 6, skip: CROSSING }),
+  ...city.crossing({ x: CROSSING[0], y: 6, w: CROSSING[1] - CROSSING[0], d: SIDEWALK - 6 }),
+  ...city.sidewalk({ x: STREET, y: SIDEWALK, w: LONG - STREET, d: DEEP - SIDEWALK, h: SIDEWALK_H }),
+  ...city.building({ x: 31, y: 0, z: 2, w: 9, d: 4, color: "tan", trim: "white", awning: "red", sign: { symbol: "pizza", color: "red" }, door: 1 }),
+  ...city.building({ x: 41, y: 0, z: 2, w: 8, d: 4, color: "#7fa98a", trim: "white", awning: "blue", sign: { symbol: "cup", color: "blue" }, door: 0 }),
+  ...city.tree({ x: 52, y: 1, size: 1.1 }),
+  ...city.bush({ x: 50.6, y: 2.6 }),
+  ...city.car({ x: 32, y: 6.6, z: 1, color: "blue" }),
+  ...city.bin({ x: 38, y: 14.5 }),
+  ...city.hydrant({ x: 31, y: 14.5 }),
+  ...city.bench({ x: 52, y: 19 }),
+  ...city.dog({ x: 48.8, y: 17.1 }),
+];
+street.forEach((piece) => add(piece.step ?? 0, piece));
+
+// Scenery on the grass: round-leaved trees, bushes and flowers.
+[[16, 2, 1], [19.5, 4.5, 0.85], [1, 17, 0.8]].forEach(([x, y, size]) => city.tree({ x, y, size }).forEach((piece) => add(0, piece)));
+city.bush({ x: 13.5, y: 18 }).forEach((piece) => add(0, piece));
+city.flowers([[13, 16, "white"], [14.5, 17, "yellow"], [18, 17, "white"], [3, 3, "yellow"], [9, 2, "white"], [8, 3.4, "yellow"], [20, 18.5, "white"], [27, 2, "yellow"]]).forEach((piece) => add(0, piece));
 
 // Step 1: the wind turbine. A tapering white tower, the nacelle on top and a hub facing +y.
 {
@@ -134,7 +141,10 @@ const lamp = (cx) => {
   add(4, b.round({ x, y: 18, z: 26, w: 1, h: 1, color: "azure", studs: false, steps: 16, id: "eye" }));
 };
 LAMPS.forEach(lamp);
-add(4, fig.minifig({ x: 46, y: 16.6, z: SIDEWALK_H, torso: "red", legs: "blue", hair: "brown" }));
+add(4, fig.minifig({ x: 46, y: 16.6, z: SIDEWALK_H, torso: "red", legs: "blue", hair: "#7a3f1d", print: "jacket" }));
+add(0, fig.minifig({ x: 37.6, y: 5.6, z: SIDEWALK_H, torso: "white", legs: "white", print: "apron", hat: "white", hatStyle: "chef" }));
+add(0, fig.minifig({ x: 38.6, y: 16.4, z: SIDEWALK_H, torso: "#1b2a44", legs: "black", print: "police", hat: "#1b2a44", hatStyle: "police" }));
+add(0, fig.minifig({ x: 44.8, y: 5, z: SIDEWALK_H, torso: "azure", legs: "dark-gray", print: "shirt", hair: "#e48a24", hairStyle: "ponytail" }));
 
 auditOrExit(pieces);
 
@@ -192,7 +202,7 @@ const glows = LAMPS.map((cx) => l.glowSvg(P, [cx * STUD, BULB_Y, BULB_Z], SIDEWA
 
 const body = [
   `<defs>${l.GLOW_DEFS}${l.tokenDef("e-big", P, { r: 3.2 })}${l.tokenDef("e-small", P, { r: 1.9 })}</defs>`,
-  `<g class="lb-scene">${b.sceneSvg(pieces, P)}</g>`,
+  `<g class="lb-scene">${b.sceneSvg(pieces, P, { shadows: true })}</g>`,
   `<g class="lb-piece" data-step="2" style="--i:8">${wires.map(wireSvg).join("")}</g>`,
   `<g class="lb-piece" data-step="4" style="--i:0">${cableSvg(cable)}${risers.map((r) => cableSvg(r)).join("")}${[...risers.map((r) => r[1]), cable[0]].map((p) => {
     const [x, y] = at(p);
@@ -335,7 +345,7 @@ const html = l.lessonHtml({
   ],
   keys: "N noche · V viento · también puedes pulsar el sol o el molino",
   script,
-  css: CSS,
+  css: CSS + city.CITY_CSS,
 });
 mkdirSync(HERE, { recursive: true });
 writeFileSync(join(HERE, "farola.html"), html);

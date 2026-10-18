@@ -138,8 +138,8 @@ export function barrel({ x, y, z = 0, w = 2, h = 6, color = "brown", ...rest }) 
   return turned({ ...rest, kind: "barrel", grid: { x, y, z, w, d: w, h }, profile, at: [...centreOf(x, y, w), z * PLATE], color, steps: 28 });
 }
 // A ball centred anywhere, in millimetres (the Earth, a ball, a planet).
-export function ball({ at, r, color, trans = false, steps = 28, ...rest }) {
-  const profile = arc(Math.PI, 0, 14, (angle) => [Math.cos(angle) * r, Math.sin(angle) * r]);
+export function ball({ at, r, color, trans = false, steps = 28, rings = 14, ...rest }) {
+  const profile = arc(Math.PI, 0, rings, (angle) => [Math.cos(angle) * r, Math.sin(angle) * r]);
   return turned({ ...rest, kind: "ball", profile, at, color, trans, steps });
 }
 // A dish: a shallow bowl, open side up (a radar or satellite dish) or down (a lamp shade, an umbrella).
@@ -156,13 +156,13 @@ export function dish({ x, y, z = 0, w = 4, depth = 6, up = true, color, ...rest 
 }
 // A wheel on an axle along x or y: a black tyre with a rounded tread around a rim with a sunken hub.
 // `at` is the wheel's centre in millimetres.
-export function wheel({ at, axis = "y", r = 7, width = 6, tire = "black", rim = "light-gray", ...rest }) {
+export function wheel({ at, axis = "y", r = 7, width = 6, tire = "black", rim = "light-gray", steps = 32, ...rest }) {
   const half = width / 2;
   const rimR = r * 0.62;
   const round = Math.min(half, r * 0.25);
   const tread = [[-half, rimR], [-half, r - round], ...arc(Math.PI, Math.PI / 2, 4, (angle) => [-half + round + Math.cos(angle) * round, r - round + Math.sin(angle) * round]).slice(1), ...arc(Math.PI / 2, 0, 4, (angle) => [half - round + Math.cos(angle) * round, r - round + Math.sin(angle) * round]).slice(1), [half, rimR]];
-  const tyre = revolveFaces([...tread, tread[0]], { at, axis, steps: 32 });
-  const hub = revolveFaces([[-half + 0.6, 0], [-half + 0.6, rimR], [half - 0.6, rimR], [half - 0.6, rimR * 0.45], [half - 1.6, rimR * 0.45], [half - 1.6, 0]], { at, axis, steps: 24 });
+  const tyre = revolveFaces([...tread, tread[0]], { at, axis, steps });
+  const hub = revolveFaces([[-half + 0.6, 0], [-half + 0.6, rimR], [half - 0.6, rimR], [half - 0.6, rimR * 0.45], [half - 1.6, rimR * 0.45], [half - 1.6, 0]], { at, axis, steps: Math.max(12, Math.round(steps * 0.75)) });
   const box = boxAround([...tyre, ...hub]);
   return { ...rest, kind: "wheel", box, svg: (P) => meshSvg(tyre, tire, P) + meshSvg(hub, rim, P) };
 }

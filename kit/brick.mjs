@@ -192,7 +192,9 @@ export function brick({ x, y, z = 0, w = 1, d = 1, h = 3, color, studs = true, t
     color,
     grid: { x, y, z, w, d, h },
     box: boxOf(x0, y0, z0, x1, y1, z1),
-    svg: (P) => solidSvg(boxFaces(x0, y0, z0, x1, y1, z1), color, P, { trans }) + studsSvg(tops, color, P),
+    studsAt: tops,
+    // `covered` is the set of studs another piece sits on, which sceneSvg leaves out.
+    svg: (P, covered) => solidSvg(boxFaces(x0, y0, z0, x1, y1, z1), color, P, { trans }) + studsSvg(covered ? tops.filter((t) => !covered.has(t)) : tops, color, P),
   };
 }
 export const plate = (options) => brick({ h: 1, ...options });
@@ -282,17 +284,69 @@ export function orderPieces(pieces, projection) {
       waiting[second]++;
     }
   }
+  // Pieces that pass through each other can make cycles (A before B before C before A). Group the
+  // pieces into strongly connected components, so a cycle is settled among its own members by
+  // depth and never pulls an unrelated piece out of order; then sort the components themselves.
+  const component = new Array(n).fill(-1);
+  const members = [];
+  {
+    const index = new Array(n).fill(-1);
+    const low = new Array(n).fill(0);
+    const onStack = new Array(n).fill(false);
+    const stack = [];
+    let counter = 0;
+    for (let root = 0; root < n; root++) {
+      if (index[root] >= 0) continue;
+      const work = [[root, 0]];
+      index[root] = low[root] = counter++;
+      stack.push(root);
+      onStack[root] = true;
+      while (work.length) {
+        const frame = work[work.length - 1];
+        const [v, edge] = frame;
+        if (edge < later[v].length) {
+          frame[1]++;
+          const w = later[v][edge];
+          if (index[w] < 0) {
+            index[w] = low[w] = counter++;
+            stack.push(w);
+            onStack[w] = true;
+            work.push([w, 0]);
+          } else if (onStack[w]) low[v] = Math.min(low[v], index[w]);
+          continue;
+        }
+        work.pop();
+        if (work.length) low[work[work.length - 1][0]] = Math.min(low[work[work.length - 1][0]], low[v]);
+        if (low[v] === index[v]) {
+          const group = [];
+          let w;
+          do {
+            w = stack.pop();
+            onStack[w] = false;
+            component[w] = members.length;
+            group.push(w);
+          } while (w !== v);
+          members.push(group.sort((a, b) => depth[a] - depth[b]));
+        }
+      }
+    }
+  }
+  const count = members.length;
+  const after = Array.from({ length: count }, () => new Set());
+  const before = new Array(count).fill(0);
+  for (let v = 0; v < n; v++) for (const w of later[v]) if (component[v] !== component[w] && !after[component[v]].has(component[w])) {
+    after[component[v]].add(component[w]);
+    before[component[w]]++;
+  }
+  const near = members.map((group) => depth[group[0]]);
+  const ready = new Set(members.map((_, c) => c).filter((c) => before[c] === 0));
   const order = [];
-  const ready = new Set(pieces.map((_, index) => index).filter((index) => waiting[index] === 0));
-  const left = new Set(pieces.map((_, index) => index));
-  while (left.size) {
+  while (ready.size) {
     let pick = -1;
-    const pool = ready.size ? ready : left;
-    for (const index of pool) if (pick < 0 || depth[index] < depth[pick]) pick = index;
+    for (const c of ready) if (pick < 0 || near[c] < near[pick]) pick = c;
     ready.delete(pick);
-    left.delete(pick);
-    order.push(pieces[pick]);
-    for (const next of later[pick]) if (left.has(next) && --waiting[next] === 0) ready.add(next);
+    for (const v of members[pick]) order.push(pieces[v]);
+    for (const c of after[pick]) if (--before[c] === 0) ready.add(c);
   }
   return order;
 }
@@ -307,18 +361,38 @@ export function splitByLane(pieces, y0, y1) {
 }
 
 // The whole scene in painter's order. Each piece is wrapped so a lesson can hide it until its
-// building step, then drop it into place.
-export function sceneSvg(pieces, projection) {
+// building step, then drop it into place. With shadows, pieces standing on the ground (up to
+// `ground` mm high) cast a soft contact shadow just before they are painted; a piece decides for
+// itself with shadow: true or false.
+export function sceneSvg(pieces, projection, { shadows = false, ground = 3 * PLATE } = {}) {
   const count = new Map();
-  return orderPieces(pieces, projection)
+  const casts = (piece) => piece.shadow ?? (piece.box.z0 >= -0.05 && piece.box.z0 <= ground + 0.05 && piece.box.z1 - piece.box.z0 >= 8 && piece.kind !== "pipe" && piece.kind !== "hose" && !piece.float);
+  const defs = shadows ? `<defs><filter id="lb-soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>` : "";
+  // Studs under a piece that sits on them can't be seen: leave them out.
+  const covered = new Map();
+  for (const piece of pieces) {
+    if (!piece.studsAt?.length) continue;
+    const hidden = new Set(piece.studsAt.filter(([x, y, z]) => pieces.some((other) => other !== piece && Math.abs(other.box.z0 - z) < 0.3 && x > other.box.x0 && x < other.box.x1 && y > other.box.y0 && y < other.box.y1 && !other.float && other.kind !== "pipe" && other.kind !== "hose")));
+    if (hidden.size) covered.set(piece, hidden);
+  }
+  return defs + orderPieces(pieces, projection)
     .map((piece) => {
       const step = piece.step ?? 0;
       const index = count.get(step) ?? 0;
       count.set(step, index + 1);
       const data = (piece.id ? ` data-id="${piece.id}"` : "") + (piece.until !== undefined ? ` data-until="${piece.until}"` : "");
-      return `<g class="lb-piece" data-step="${step}"${data} style="--i:${index}">${piece.svg(projection)}</g>`;
+      return `<g class="lb-piece" data-step="${step}"${data} style="--i:${index}">${shadows && casts(piece) ? shadowSvg(piece, projection) : ""}${piece.svg(projection, covered.get(piece))}</g>`;
     })
     .join("");
+}
+// A soft shadow under a piece, its footprint a little larger and shifted away from the light.
+function shadowSvg(piece, projection) {
+  const { x0, y0, x1, y1, z0 } = piece.box;
+  const [dx, dy, grow] = [1.8, -1.2, 0.8];
+  const ring = piece.circle
+    ? circleOf(piece.circle[0] + dx, piece.circle[1] + dy, piece.circle[2] + grow, 20)
+    : [[x0 - grow, y0 - grow], [x1 + grow, y0 - grow], [x1 + grow, y1 + grow], [x0 - grow, y1 + grow]].map(([x, y]) => [x + dx, y + dy]);
+  return `<path class="lb-shadow" d="${pathOf(ring.map(([x, y]) => iso([x, y, z0 + 0.05], projection)), true)}" filter="url(#lb-soft)"/>`;
 }
 
 export const BRICK_CSS = `
@@ -328,6 +402,7 @@ export const BRICK_CSS = `
 .lb-stud{stroke:none}
 .lb[data-trans]>path:not(.lb-edge):not(.lb-crease){fill-opacity:.78}
 .lb-face{fill:none;stroke:#1b1b1b;stroke-width:.8;stroke-linecap:round}
+.lb-shadow{fill:#1c2630;fill-opacity:.24;stroke:none}
 .iso-svg .lb-hose{fill:none;stroke-linecap:butt;stroke-linejoin:round;vector-effect:none}
 .lb-ring{fill:none;stroke-width:.7;stroke-opacity:.6;stroke-linecap:round}
 `;

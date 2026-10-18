@@ -71,14 +71,28 @@ Las medidas son las de LEGO de verdad, en milímetros: un *stud* mide 8 de ancho
 | `round({ x, y, z, w, h, color, studs, trans, steps })` | Ladrillo o placa redonda de diámetro `w`. Se puede colocar en medio *stud* (`x: 4.5`). |
 | `custom({ faces, color, extra, box })` | Cualquier sólido convexo, a partir de caras. `extra(P)` añade dibujo encima, como la señal del rayo. |
 | `group({ parts })` | Varias piezas que se ordenan como una sola, listadas de atrás adelante. |
-| `minifig({ x, y, z, torso, legs, hair, hat, facing })` | En `kit/lego-figure.mjs`. Una minifigura como la de verdad: pies, cadera, brazos con hombro redondo, manos en C, cabeza redondeada con cejas, ojos y sonrisa. Mira hacia +y o hacia +x (`facing: "x"`). Con `legs: null` está sentada, con la cintura a la altura `z` y las manos al frente. |
+| `minifig({ x, y, z, torso, legs, hair, hat, facing, print, hairStyle, hatStyle, child })` | En `kit/lego-figure.mjs`. Una minifigura como la de verdad: pies, cadera, brazos con hombro redondo, manos en C, cabeza redondeada con cejas, ojos y sonrisa. Mira hacia +y o hacia +x (`facing: "x"`). Con `legs: null` está sentada. Para darle oficio: `print` (`jacket`, `shirt`, `apron`, `police`, `hivis`), `hairStyle` (`short`, `ponytail`, `tall`), `hatStyle` con `hat` (`cap`, `helmet`, `chef`, `police`) y `child: true` para un niño. |
 | `pipe({ axis: "x" \| "y" \| "z", from, to, at, r, color })` | Tubería recta en milímetros. `at` son las otras dos coordenadas. Los codos son un `round` de 1×1 en la esquina. |
 | `boxFaces`, `cylinderFaces`, `frustumFaces`, `extrudeFaces(profile, "x" \| "y", from, to)`, `prismFaces` | Constructores de caras, en milímetros: cajas, cilindros, conos y pantallas, rampas y cuñas, cilindros tumbados (ruedas, ejes) y prismas. |
 | `solidSvg(faces, color, P)` | Dibuja un sólido suelto, fuera de la escena, por ejemplo el buje del molino. |
 | `studSvg(cx, cy, z, color, P)` | Un *stud* suelto. |
-| `sceneSvg(pieces, P)` | Ordena todas las piezas (las de detrás primero) y las envuelve para los pasos. |
+| `sceneSvg(pieces, P, { shadows })` | Ordena todas las piezas (las de detrás primero) y las envuelve para los pasos. Con `shadows: true`, lo que está de pie sobre el suelo proyecta una sombra suave. No dibuja los *studs* que tapa otra pieza. |
 
 Cualquier pieza acepta `step`, el paso en que aparece; `until`, el último paso en que se ve (una manguera que se retira); e `id`, que pasa a `data-id` y sirve para clics y estilos. Colores: `red`, `yellow`, `blue`, `green`, `bright-green`, `lime`, `white`, `black`, `light-gray`, `dark-gray`, `tan`, `dark-tan`, `brown`, `orange`, `azure`, `skin`, `trans-yellow` y `trans-clear`, o cualquier `#rrggbb`. El sombreado es el de los folletos de instrucciones: arriba claro, la cara +y media y la cara +x oscura, con contorno fino.
+
+### `kit/lego-city.mjs`: LEGO City listo para usar
+
+Para que la escena parezca una caja de LEGO City. Cada función devuelve una lista de piezas: `pieces.push(...city.tree({ … }))`.
+
+| Función | Qué hace |
+|---|---|
+| `road({ x, y, w, d, along, skip })`, `crossing(…)`, `sidewalk(…)` | Placa de carretera gris claro con línea discontinua (`skip` deja un tramo sin rayas), paso de cebra y acera de baldosas con bordillo. |
+| `building({ x, y, z, w, d, floors, color, trim, awning, sign, door })` | Una fachada que mira hacia +y: plantas con ventanas enmarcadas, puerta, toldo de rayas (`awning: "red"`) y cartel con símbolo (`sign: { symbol: "pizza" \| "cup" \| "cross", color }`). Sus ventanas se encienden de noche con `CITY_CSS`. |
+| `tree`, `bush`, `flowers` | Árboles y arbustos de hojas redondas LEGO y flores sueltas. |
+| `bench`, `bin`, `hydrant` | Banco, papelera y boca de incendios. |
+| `car({ x, y, z, color })`, `dog({ x, y, z })` | Un coche de 8×4 *studs* con ruedas, parabrisas y faros, y un perro. |
+
+Las minifiguras con oficio, el kit de ciudad y `sceneSvg(…, { shadows: true })` juntos son lo que da el aire de LEGO City: úsalos en toda escena de calle o de pueblo. `examples/farola/` es el ejemplo.
 
 ### `kit/lego-round.mjs`: piezas redondas
 
@@ -168,6 +182,7 @@ lesson.night, lesson.dark, lesson.ease(desde, hasta, dt, tau)
 - **Las piezas no se atraviesan.** El orden de pintado se basa en que las cajas de las piezas no se cruzan. Si dos se cruzan (un brazo que atraviesa un poste), pártelas o usa `group`. Lo que cruza la escena de lado a lado (cables, aspas) no va como pieza: va encima, en un grupo propio.
 - **Lo que viaja, más pequeño que su tubo.** Una pieza viajera más ancha que la tubería o el cable la tapa: usa `r` de 1,6 en tuberías finas y de 2,6-3,2 en las gruesas o en cables al aire.
 - **Lo que se mueve por la escena va aparte.** Un avión o un coche que recorre la escena no entra en `sceneSvg` con el resto: se ordena solo (`sceneSvg(susPiezas, P)`), va en su propio grupo por encima y se mueve con `translateAlong`. Lo que viaja con él (su aire) va en una capa dentro de ese grupo (`lesson.route(…, { layer })`). Pásalo igualmente a la auditoría en su posición de reposo. Como ese grupo se pinta encima de la escena, parte la escena con `splitByLane(piezas, y0, y1)` (la franja en `y` que ocupa al moverse): `behind` va antes del grupo y `ahead` después, para que no pase por encima de una minifigura que está delante. Y que en `inLane` no quede nada con lo que choque.
+- **La vida no estorba a la idea.** Los personajes, coches y tiendas del kit de ciudad decoran el paso 0 y se quedan quietos; lo que se mueve sigue siendo lo que explica. Ningún personaje debe meterse bajo un toldo ni atravesar otra pieza: el orden de pintado se estropea donde las piezas se cruzan.
 - **Cada cosa aparece en su paso.** Lo que pertenece a algo (el camino de la casa, el contador de la pared) va en el mismo `step` que ese algo, no en el paso 0.
 - **Colores con intención.** Los colores básicos de LEGO City. El amarillo brillante queda reservado para lo que viaja, para que el niño lo siga con el dedo.
 - **Movimiento tranquilo.** Seguimiento exponencial (`lesson.ease`), nada brusco, nada que aparezca de golpe: las rutas ya se desvanecen en los extremos. Con movimiento reducido, todo queda quieto en su estado final.

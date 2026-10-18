@@ -1,5 +1,5 @@
 import { cameraOf, iso, pathOf } from "./iso-kit.mjs";
-import { PLATE, STUD, boxFaces, boxOf, custom, cylinderFaces, extrudeFaces, frustumFaces, group, studSvg } from "./brick.mjs";
+import { PLATE, STUD, boxFaces, boxOf, custom, cylinderFaces, extrudeFaces, frustumFaces, group, prismFaces, studSvg } from "./brick.mjs";
 import { meshSvg, revolveFaces } from "./lego-round.mjs";
 
 // The LEGO minifigure, close to the real one: legs with feet, a hip band, a tapered torso, arms with
@@ -14,7 +14,11 @@ const unit = (v) => {
 // A minifigure standing at stud (x, y) on plate level z, facing +y (towards the viewer's left) or,
 // with facing: "x", towards +x (the viewer's right). With legs: null it is seated: its waist is at
 // z, as on a seat or in a kart, and its hands come forward as if on a steering wheel.
-export function minifig({ x, y, z = 0, torso = "red", legs = "blue", hair = "brown", hat, facing = "y", skin = "skin", ...rest }) {
+//   print      what is printed on the torso: "jacket", "shirt", "apron", "police" or "hivis"
+//   hairStyle  "short" (the default), "ponytail" or "tall"
+//   hatStyle   with hat: "cap" (the default), "helmet", "chef" or "police"
+//   child      short legs, for a child
+export function minifig({ x, y, z = 0, torso = "red", legs = "blue", hair = "brown", hat, facing = "y", skin = "skin", print = null, hairStyle = "short", hatStyle = "cap", child = false, ...rest }) {
   const cx = x * STUD;
   const cy = y * STUD;
   const z0 = z * PLATE;
@@ -50,11 +54,13 @@ export function minifig({ x, y, z = 0, torso = "red", legs = "blue", hair = "bro
     [-1, 1].forEach((side) => {
       const [s0, s1] = side < 0 ? [-7.6, -0.2] : [0.2, 7.6];
       // The foot first: the leg stands on it, so only a small step of the foot shows in front.
-      parts.push(part(box(s0, s1, -3.9, 4.6, z0, z0 + 3.2), legs));
-      parts.push(part(box(s0, s1, -3.9, 3.0, z0 + 3.2, z0 + 11.6), legs));
+      const [foot, knee] = child ? [2.4, 5.8] : [3.2, 11.6];
+      parts.push(part(box(s0, s1, -3.9, 4.6, z0, z0 + foot), legs));
+      parts.push(part(box(s0, s1, -3.9, 3.0, z0 + foot, z0 + knee), legs));
     });
-    parts.push(part(box(-7.8, 7.8, -3.9, 3.9, z0 + 11.6, z0 + 14.2), legs));
-    waist = z0 + 14.2;
+    const hip = child ? 5.8 : 11.6;
+    parts.push(part(box(-7.8, 7.8, -3.9, 3.9, z0 + hip, z0 + hip + 2.6), legs));
+    waist = z0 + hip + 2.6;
   }
   const neck = waist + 12.4;
 
@@ -83,7 +89,7 @@ export function minifig({ x, y, z = 0, torso = "red", legs = "blue", hair = "bro
       return [ax - ox, ay - oy, 0];
     };
     const faces = [];
-    const steps = 14;
+    const steps = 10;
     for (let j = 0; j < steps; j++) {
       const a0 = gap + ((Math.PI * 2 - 2 * gap) * j) / steps;
       const a1 = gap + ((Math.PI * 2 - 2 * gap) * (j + 1)) / steps;
@@ -100,7 +106,7 @@ export function minifig({ x, y, z = 0, torso = "red", legs = "blue", hair = "bro
     return mesh(faces, skin);
   };
 
-  const torsoPart = part(alongF([[-7.8, waist], [7.8, waist], [6.0, neck], [-6.0, neck]], -3.9, 3.9), torso);
+  const torsoPart = custom({ faces: alongF([[-7.8, waist], [7.8, waist], [6.0, neck], [-6.0, neck]], -3.9, 3.9), color: torso, extra: print ? (P) => printSvg(print, at, waist, neck, torso, P) : undefined });
   const [farArm, nearArm] = [arm(-1), arm(1)];
 
   // Neck and head: a rounded cylinder with a stud on top when nothing covers it.
@@ -114,18 +120,44 @@ export function minifig({ x, y, z = 0, torso = "red", legs = "blue", hair = "bro
   });
   const headProfile = [[0, 0], [0, R - 1.4], ...round(0, R, 1).slice(0, 3), [1.4, R], [H - 1.4, R], ...round(H, R, -1).reverse().slice(1), [H, R - 1.4], [H, 0]];
   const neckPart = part(cylinderFaces(hx, hy, 2.9, neck, headZ, 16), skin);
-  const headFaces = revolveFaces(headProfile, { at: [hx, hy, headZ], axis: "z", steps: 28 });
+  const headFaces = revolveFaces(headProfile, { at: [hx, hy, headZ], axis: "z", steps: 20 });
   // The stud on top of a bare head is hollow, as on the classic head.
   const hollow = (P) => `<path d="${pathOf(Array.from({ length: 16 }, (_, i) => iso([hx + Math.cos((i / 16) * Math.PI * 2) * 1.5, hy + Math.sin((i / 16) * Math.PI * 2) * 1.5, headZ + H + 1.7], P)), true)}" fill="#8a7414"/>`;
   const head = mesh(headFaces, skin, (P) => faceSvg(at, R, headZ, P) + (hat || hair ? "" : studSvg(hx, hy, headZ + H, skin, P, { r: 2.5, h: 1.7 }) + hollow(P)));
-  const top = hat
-    ? custom({ faces: cylinderFaces(hx, hy, 5.7, headZ + 8, headZ + 10.8, 24), color: hat, extra: (P) => studSvg(hx, hy, headZ + 10.8, hat, P, { r: 2.2 }) })
-    : hair
-      ? custom({ faces: frustumFaces(hx, hy, 5.4, headZ + 6.6, 4.4, headZ + 11.2, 24), color: hair })
-      : null;
+  // What sits on the head: a hat in one of four styles, or hair. Parts behind the head (the hair at
+  // the back, a ponytail) go before it; brims and badges in front go after.
+  const behind = [];
+  const above = [];
+  const turn = (profile, color) => mesh(revolveFaces(profile, { at: [hx, hy, headZ], axis: "z", steps: 18 }), color);
+  const dome = (r, base, rise, steps = 5) => Array.from({ length: steps + 1 }, (_, i) => {
+    const a = (Math.PI / 2) * (i / steps);
+    return [base + Math.sin(a) * rise, Math.cos(a) * r];
+  });
+  if (hat && hatStyle === "helmet") {
+    above.push(turn([[6.4, 0], [6.4, 6.8], [7.2, 6.8], [7.2, 5.9], ...dome(5.9, 7.2, 4.6).slice(1)], hat));
+  } else if (hat && hatStyle === "chef") {
+    above.push(turn([[7.4, 0], [7.4, 5.4], [12.6, 5.6], ...dome(6.2, 12.6, 3.4).slice(1)], hat));
+  } else if (hat && hatStyle === "police") {
+    above.push(turn([[7.6, 0], [7.6, 5.4], [10.2, 5.5], [10.2, 6.2], [11.2, 6.2], [11.4, 0]], hat));
+    above.push(custom({ faces: box(-4.2, 4.2, 4.6, 8.0, headZ + 7.6, headZ + 8.3), color: "black" }));
+    above.push(custom({ faces: box(-1.1, 1.1, 5.55, 5.9, headZ + 8.5, headZ + 10.2), color: "yellow" }));
+  } else if (hat) {
+    above.push(custom({ faces: cylinderFaces(hx, hy, 5.7, headZ + 8, headZ + 10.8, 24), color: hat, extra: (P) => studSvg(hx, hy, headZ + 10.8, hat, P, { r: 2.2 }) }));
+    above.push(custom({ faces: box(-4.4, 4.4, 4.8, 8.6, headZ + 8, headZ + 8.8), color: hat }));
+  } else if (hair && hairStyle === "tall") {
+    above.push(custom({ faces: frustumFaces(hx, hy, 5.4, headZ + 6.6, 4.4, headZ + 11.2, 24), color: hair }));
+  } else if (hair) {
+    // The hair at the back follows the round head: a half disc behind the ears, pushed down the nape.
+    const nape = Array.from({ length: 13 }, (_, i) => {
+      const angle = Math.PI * (0.08 + (i / 12) * 0.84);
+      return at(Math.cos(angle) * 5.35, -Math.sin(angle) * 5.35, 0).slice(0, 2);
+    });
+    behind.push(custom({ faces: prismFaces(nape, headZ + 2.6, headZ + 7.2), color: hair }));
+    if (hairStyle === "ponytail") behind.push(custom({ faces: cylinderFaces(...at(0, -6.6, 0).slice(0, 2), 1.9, headZ + 1.2, headZ + 8.4, 12), color: hair }));
+    above.push(turn([[6.8, 0], [6.8, 5.35], ...dome(5.35, 6.8, 4.2).slice(1)], hair));
+  }
 
-  parts.push(...farArm, hand(-1), torsoPart, ...nearArm, hand(1), neckPart, head);
-  if (top) parts.push(top);
+  parts.push(...farArm, hand(-1), torsoPart, ...nearArm, hand(1), neckPart, ...behind, head, ...above);
   const reachF = reach[0] + 2;
   const [lo, hi] = [flat(-11.6, -3.9), flat(11.6, Math.max(4.5, reachF))];
   return group({
@@ -134,6 +166,25 @@ export function minifig({ x, y, z = 0, torso = "red", legs = "blue", hair = "bro
     box: boxOf(Math.min(lo[0], hi[0]), Math.min(lo[1], hi[1]), z0, Math.max(lo[0], hi[0]), Math.max(lo[1], hi[1]), headZ + 11.4),
     parts,
   });
+}
+
+// The print on the front of the torso, drawn on its face in the figure's own frame.
+function printSvg(kind, at, waist, neck, torso, P) {
+  const front = (s, z) => iso(at(s, 3.96, z), P);
+  const poly = (points, fill) => `<path d="${pathOf(points.map(([s, z]) => front(s, z)), true)}" fill="${fill}"/>`;
+  const line = (points, stroke, width = 0.8) => `<path d="${pathOf(points.map(([s, z]) => front(s, z)))}" fill="none" stroke="${stroke}" stroke-width="${width}" stroke-linecap="round"/>`;
+  const dot = ([s, z], r, fill) => {
+    const [x, y] = front(s, z);
+    return `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${(r * cameraOf(P).k).toFixed(2)}" fill="${fill}"/>`;
+  };
+  const ink = "#1b1b1b";
+  const h = neck - waist;
+  if (kind === "jacket") return line([[0, neck - 0.6], [0, waist + 0.4]], ink) + line([[-3.4, neck - 0.3], [0, neck - 3.6], [3.4, neck - 0.3]], ink) + line([[-5.4, waist + 3.4], [-3.2, waist + 3.4]], ink) + line([[3.2, waist + 3.4], [5.4, waist + 3.4]], ink);
+  if (kind === "shirt") return poly([[-2.6, neck - 0.2], [0, neck - 3.4], [2.6, neck - 0.2]], "#f4f4f0") + [0.3, 0.55, 0.8].map((t) => dot([0, waist + h * t], 0.38, ink)).join("");
+  if (kind === "apron") return poly([[-5.6, waist + 0.3], [5.6, waist + 0.3], [4.4, waist + h * 0.62], [-4.4, waist + h * 0.62]], "#f6f6f2") + line([[-4.2, waist + h * 0.62], [-3.2, neck - 0.4]], "#f6f6f2", 1.2) + line([[4.2, waist + h * 0.62], [3.2, neck - 0.4]], "#f6f6f2", 1.2);
+  if (kind === "police") return poly([[-2.4, neck - 0.2], [0, neck - 3.8], [2.4, neck - 0.2]], "#f4f4f0") + poly([[-0.6, neck - 1.6], [0.6, neck - 1.6], [0.9, waist + h * 0.35], [0, waist + h * 0.25], [-0.9, waist + h * 0.35]], "#1b2a44") + dot([-3.6, neck - 4.6], 0.9, "#f2cd37") + line([[-7.4, waist + 1.4], [7.4, waist + 1.4]], "#f4f4f0", 1);
+  if (kind === "hivis") return [0.3, 0.6].map((t) => poly([[-7.6 + t * 1.8, waist + h * t - 0.8], [7.6 - t * 1.8, waist + h * t - 0.8], [7.5 - t * 1.8, waist + h * t + 0.8], [-7.5 + t * 1.8, waist + h * t + 0.8]], "#dfe3e6")).join("") + line([[0, neck - 0.6], [0, waist + 0.4]], "#7a4a10");
+  return "";
 }
 
 // Eyebrows, eyes with a highlight and a smile, printed on the side of the head that faces forward.

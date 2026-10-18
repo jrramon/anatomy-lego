@@ -105,7 +105,8 @@ Debajo hay un kit en JavaScript que dibuja piezas LEGO con sus medidas reales (u
 | `kit/brick.mjs` | Ladrillos, placas, *tiles*, rampas, tuberías y piezas a medida; el orden de pintado |
 | `kit/lego-round.mjs` | Cúpulas, conos, bolas, platos, ruedas y piezas torneadas |
 | `kit/lego-tube.mjs` | Mangueras, cables y tubos curvos |
-| `kit/lego-figure.mjs` | Minifiguras de pie o sentadas |
+| `kit/lego-figure.mjs` | Minifiguras de pie o sentadas, con oficio: cocinero, policía, obrero, niños… |
+| `kit/lego-city.mjs` | LEGO City listo para usar: carreteras con paso de cebra, tiendas con toldo, árboles, mobiliario, coches y perros |
 | `kit/lego-spin.mjs` | Piezas que giran de verdad, con día y noche |
 | `kit/lego-fx.mjs` | Agua, fuego y humo con WebGL (sin WebGL, la lección sigue completa) |
 | `kit/lego-audit.mjs` | Comprueba que ninguna pieza atraviesa a otra, flota o aparece antes que lo que la sujeta |
