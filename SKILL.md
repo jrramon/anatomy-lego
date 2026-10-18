@@ -9,7 +9,7 @@ compatibility: Escrita para Claude Code. Necesita Node.js 20.10+, y Chrome o Chr
 
 Esta skill convierte una pregunta de un niño pequeño en una **escena LEGO City que se construye paso a paso** mientras un adulto cuenta la historia. El niño no lee: mira, señala, contesta y toca. El adulto lee en voz alta lo que pone en «Dile», hace la pregunta de «Pregúntale» y, si quiere saber más, tiene la explicación de verdad en «Para mamá o papá».
 
-Hay cinco ejemplos completos. Abre el más parecido antes de empezar y cópialo como plantilla:
+Hay seis ejemplos completos. Abre el más parecido antes de empezar y cópialo como plantilla:
 - `examples/farola/`: «¿Cómo llega la luz a la farola?». Flujos que dependen del día y la noche, y cable en el corte de tierra.
 - `examples/agua/`: «¿De dónde sale el agua del grifo?». Tuberías (`pipe`), piezas que cambian de color por el camino y la demanda del pueblo frente a la de la casa.
 - `examples/avion/`: «¿Por qué vuela un avión?». Un objeto que se mueve por la escena con su propio aire, que también se mueve con él. Usa piezas redondas (fuselaje, ruedas, cúpula), una manguera que solo aparece en un paso (`until`) y un modelo físico con un caso que falla a propósito (demasiado peso).
@@ -18,6 +18,7 @@ Hay cinco ejemplos completos. Abre el más parecido antes de empezar y cópialo 
 - `examples/motor/`: «¿Cómo funciona el motor de un coche?». Un mecanismo por dentro: un cilindro de cristal casi transparente, piezas vivas (pistón, biela, válvulas) movidas por un único ángulo, y una carga de piezas que se aprieta y cambia de color según el tiempo del motor. También un piloto sentado (`minifig({ legs: null, facing: "x" })`) y soportes que se retiran (`until`) para que el kart arranque.
 
 - `examples/dia-noche/`: «¿Por qué hay día y noche?». Una pieza que gira de verdad (`lego-spin`): la Tierra de ladrillo con continentes, iluminada por el Sol de la escena, con una casa cuyas ventanas se encienden de noche. Se puede arrastrar con el ratón.
+- `examples/vapor/`: «¿Cómo funciona una central de vapor?». Usa todos los kits a la vez: fuego con `lego-fx` bajo una caldera, la rueda de la turbina y el imán del generador girando en el mismo eje con `lego-spin` (eje `x`), bobinas y torre de refrigeración con `lego-round`, y un circuito cerrado de agua y vapor que vuelve a empezar.
 
 Cada uno se construye con `node examples/<nombre>/build.mjs`, que escribe la página junto al script. Con `--audit` pasa además la auditoría.
 
@@ -117,7 +118,7 @@ Efectos que se dibujan con WebGL sobre el SVG, en la misma cámara y en bandas d
 |---|---|
 | `water({ id, rect, z, occluders })` | Agua en un rectángulo del suelo, en milímetros, con brillos que se mueven. `lesson.fx.ripple(id, x, y)` hace un anillo donde cae una gota. |
 | `flame({ id, at, r, z0, z1, occluders })` | Llama dentro de un cilindro vertical. `lesson.fx.set(id, "low", z)` mueve su suelo (la cabeza de un pistón). |
-| `smoke({ id, at, drift, size, occluders })` | Bocanadas de humo que salen de un punto y suben siguiendo `drift`. |
+| `smoke({ id, at, drift, size, color, occluders })` | Bocanadas de humo o vapor que salen de un punto y suben siguiendo `drift`. Sobre fondo claro, usa un `color` algo más oscuro que el blanco para que se vea. |
 
 En la página: `lesson.fx.level(id, 0..1)` enciende o apaga un efecto y `lesson.fx.offset(id, [x, y, z])` lo mueve con un grupo que se desplaza (el kart). **`occluders`** son las cajas `[x0, y0, z0, x1, y1, z1]` de las piezas que quedan delante del efecto: el lienzo va encima de todo el SVG, así que sin ellas el agua se pintaría encima de la presa. Pon siempre las que tapan el efecto y compruébalo en una captura.
 

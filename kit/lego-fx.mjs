@@ -25,8 +25,8 @@ export function flame({ id, at, r, z0, z1, occluders = [] }) {
   return { type: "flame", id, at, r, z0, z1, occluders };
 }
 // Smoke puffing out of a point and drifting along `drift` (millimetres per puff's life) as it rises.
-export function smoke({ id, at, drift = [-14, 2, 30], size = 1, occluders = [] }) {
-  return { type: "smoke", id, at, drift, size, occluders };
+export function smoke({ id, at, drift = [-14, 2, 30], size = 1, color = [0.8, 0.82, 0.85], occluders = [] }) {
+  return { type: "smoke", id, at, drift, size, color, occluders };
 }
 
 const PRELUDE = `precision highp float;
@@ -103,7 +103,7 @@ ${hiddenGlsl(u, occluders, `+u_${u}_offset`)}vec4 fx_${u}(vec2 vb){
 `;
 }
 
-function smokeGlsl({ id, at, drift, size, occluders }) {
+function smokeGlsl({ id, at, drift, size, color, occluders }) {
   const u = safe(id);
   return `uniform float u_${u}_level;uniform vec3 u_${u}_offset;
 ${hiddenGlsl(u, occluders, `+u_${u}_offset`)}vec4 fx_${u}(vec2 vb){
@@ -115,7 +115,7 @@ ${hiddenGlsl(u, occluders, `+u_${u}_offset`)}vec4 fx_${u}(vec2 vb){
     float puff=exp(-q*q*2.2)*(1.-age)*smoothstep(0.,.12,age)*(.75+.5*fbm3(vec3(perp.xy*.25,uTime*.4+float(i)*3.1)));
     a=max(a,puff);}
   a=bands(a*u_${u}_level*1.3,4.)*.8;
-  return vec4(vec3(.8,.82,.85)*a,a);
+  return vec4(${vec(color)}*a,a);
 }
 `;
 }

@@ -79,6 +79,9 @@ jobs:
       - name: Día y noche (LEGO)
         run: node examples/dia-noche/build.mjs --audit
 
+      - name: Central de vapor (LEGO)
+        run: node examples/vapor/build.mjs --audit
+
       - name: Committed pages are unchanged
         run: |
           git status --short
