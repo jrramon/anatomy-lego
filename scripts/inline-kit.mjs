@@ -8,19 +8,3 @@ const strip = (file) => readFileSync(join(KIT, file), "utf8").replace(/^export /
 export function kitScript() {
   return strip("iso-kit.mjs");
 }
-
-export function glScript() {
-  return strip("gl.mjs");
-}
-
-export function turnScript() {
-  return strip("turn.mjs");
-}
-
-export function fixedScript() {
-  return strip("turn-fixed.mjs") + "\n" + strip("canvas-painter.mjs");
-}
-
-export function glSharedScript() {
-  return strip("gl-shared.mjs");
-}

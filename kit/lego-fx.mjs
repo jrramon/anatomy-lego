@@ -1,4 +1,4 @@
-// LEGO effects in WebGL: the counterpart of gl.mjs. A transparent canvas over the lesson's SVG draws
+// LEGO effects in WebGL. A transparent canvas over the lesson's SVG draws
 // effects in the same isometric camera: water with moving glints and rain ripples, a flame inside
 // a cylinder, puffs of smoke. They are drawn in flat colour bands, like the bricks, not as soft
 // photographs. Without WebGL the canvas stays empty and the SVG is still the whole lesson.

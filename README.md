@@ -129,6 +129,6 @@ La CI regenera y audita las seis lecciones en cada cambio.
 
 ## Origen y licencia
 
-Este proyecto es un fork de [**Anatomy**](https://github.com/wheresryan22/anatomy), una skill que explica ideas técnicas construyéndolas como máquinas isométricas. De él vienen el núcleo isométrico (`kit/iso-kit.mjs`) y las herramientas de captura. En el repositorio quedan todavía los kits y ejemplos originales de Anatomy, que se irán retirando. Licencia [MIT](LICENSE).
+Este proyecto es un fork de [**Anatomy**](https://github.com/wheresryan22/anatomy), una skill que explica ideas técnicas construyéndolas como máquinas isométricas. De él vienen el núcleo isométrico (`kit/iso-kit.mjs`) y las herramientas de captura. Licencia [MIT](LICENSE).
 
 LEGO® es una marca registrada de The LEGO Group, que no patrocina, autoriza ni respalda este proyecto. Las lecciones son para uso personal y educativo: no reproducen el logotipo de LEGO ni deberían publicarse como productos oficiales.

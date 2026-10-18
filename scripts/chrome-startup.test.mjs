@@ -9,7 +9,7 @@ import test from "node:test";
 
 const execute = promisify(execFile);
 
-for (const name of ["capture", "drive", "turn-check"]) {
+for (const name of ["capture", "drive"]) {
   test(`${name} removes its profile when Chrome exits before startup`, async () => {
     const directory = await mkdtemp(join(tmpdir(), "anatomy-chrome-startup-"));
     let profile;
@@ -21,7 +21,7 @@ for (const name of ["capture", "drive", "turn-check"]) {
       const started = performance.now();
       let result;
       try {
-        await execute(process.execPath, [fileURLToPath(new URL(`${name}.mjs`, import.meta.url)), join(directory, "figure.html"), ...(name === "drive" ? ["[]"] : name === "turn-check" ? ["--lines"] : [])], { timeout: 30000, env: { ...process.env, CHROME_PATH: binary, ANATOMY_PROFILE_RECEIPT: receipt } });
+        await execute(process.execPath, [fileURLToPath(new URL(`${name}.mjs`, import.meta.url)), join(directory, "figure.html"), ...(name === "drive" ? ["[]"] : [])], { timeout: 30000, env: { ...process.env, CHROME_PATH: binary, ANATOMY_PROFILE_RECEIPT: receipt } });
       } catch (error) {
         result = error;
       }

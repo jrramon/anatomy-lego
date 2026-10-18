@@ -1,7 +1,7 @@
 import { cameraOf, iso, pathOf } from "./iso-kit.mjs";
 import { boxOf, edgeOf, tone } from "./brick.mjs";
 
-// LEGO hoses, flexible tubes and cables: the LEGO counterpart of tube.mjs. Seen in an orthographic
+// LEGO hoses, flexible tubes and cables. Seen in an orthographic
 // camera a round tube is the same width everywhere, so it is drawn as strokes along its centre line:
 // a dark edge, the body, a highlight towards the light, and rings if it is a ribbed hose. A long tube
 // is cut into short chunks so each sorts on its own among the bricks it passes.

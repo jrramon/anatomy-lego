@@ -1,6 +1,6 @@
 import { LIGHT, edgeOf, mix, tone } from "./brick.mjs";
 
-// LEGO parts that turn: the simple counterpart of the turn*.mjs 3D mode. A spinning group is a set of
+// LEGO parts that turn, a simple 3D mode. A spinning group is a set of
 // faces at rest; the page turns them about an axis through a pivot and redraws the group every
 // frame with the bricks' own shading. It can also be lit by a light in the scene (a sun): faces that
 // look away from it fall into night, and faces marked as lamps light up there, like windows.

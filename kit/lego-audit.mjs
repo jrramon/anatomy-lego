@@ -1,4 +1,4 @@
-// The LEGO counterpart of audit.mjs: checks a lesson's pieces the way a builder would.
+// Checks a lesson's pieces the way a builder would.
 //   overlap  two pieces pass through each other
 //   floating a piece touches nothing that holds it: nothing under it, above it or beside it
 //   early    a piece is only held by pieces that appear in a later step, so it floats until then

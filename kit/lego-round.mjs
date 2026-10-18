@@ -2,7 +2,7 @@ import { depthOf, iso, pathOf } from "./iso-kit.mjs";
 import { GAP, LIGHT, PLATE, STUD, boxOf, edgeOf, studSvg, tone, viewOf } from "./brick.mjs";
 
 // Round LEGO parts made by turning a profile around an axis: domes, cones, barrels, balls, dishes
-// and wheels. The LEGO counterpart of lathe.mjs, kept simple: flat facets shaded like the rest of
+// and wheels. Kept simple: flat facets shaded like the rest of
 // the bricks, painted back to front so concave parts (a dish, a wheel's hub) read correctly.
 
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
