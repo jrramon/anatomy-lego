@@ -73,6 +73,9 @@ jobs:
       - name: Avión (LEGO)
         run: node examples/avion/build.mjs --audit
 
+      - name: Motor (LEGO)
+        run: node examples/motor/build.mjs --audit
+
       - name: Committed pages are unchanged
         run: |
           git status --short

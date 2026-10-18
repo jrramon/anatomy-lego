@@ -9,10 +9,12 @@ compatibility: Escrita para Claude Code. Necesita Node.js 20.10+, y Chrome o Chr
 
 Esta skill convierte una pregunta de un niño pequeño en una **escena LEGO City que se construye paso a paso** mientras un adulto cuenta la historia. El niño no lee: mira, señala, contesta y toca. El adulto lee en voz alta lo que pone en «Dile», hace la pregunta de «Pregúntale» y, si quiere saber más, tiene la explicación de verdad en «Para mamá o papá».
 
-Hay tres ejemplos completos. Abre el más parecido antes de empezar y cópialo como plantilla:
+Hay cuatro ejemplos completos. Abre el más parecido antes de empezar y cópialo como plantilla:
 - `examples/farola/`: «¿Cómo llega la luz a la farola?». Flujos que dependen del día y la noche, y cable en el corte de tierra.
 - `examples/agua/`: «¿De dónde sale el agua del grifo?». Tuberías (`pipe`), piezas que cambian de color por el camino y la demanda del pueblo frente a la de la casa.
 - `examples/avion/`: «¿Por qué vuela un avión?». Un objeto que se mueve por la escena con su propio aire, que también se mueve con él. Usa piezas redondas (fuselaje, ruedas, cúpula), una manguera que solo aparece en un paso (`until`) y un modelo físico con un caso que falla a propósito (demasiado peso).
+
+- `examples/motor/`: «¿Cómo funciona el motor de un coche?». Un mecanismo por dentro: un cilindro de cristal casi transparente, piezas vivas (pistón, biela, válvulas) movidas por un único ángulo, y una carga de piezas que se aprieta y cambia de color según el tiempo del motor. También un piloto sentado (`minifig({ legs: null, facing: "x" })`) y soportes que se retiran (`until`) para que el kart arranque.
 
 Cada uno se construye con `node examples/<nombre>/build.mjs`, que escribe la página junto al script. Con `--audit` pasa además la auditoría.
 
@@ -65,7 +67,7 @@ Las medidas son las de LEGO de verdad, en milímetros: un *stud* mide 8 de ancho
 | `round({ x, y, z, w, h, color, studs, trans, steps })` | Ladrillo o placa redonda de diámetro `w`. Se puede colocar en medio *stud* (`x: 4.5`). |
 | `custom({ faces, color, extra, box })` | Cualquier sólido convexo, a partir de caras. `extra(P)` añade dibujo encima, como la señal del rayo. |
 | `group({ parts })` | Varias piezas que se ordenan como una sola, listadas de atrás adelante. |
-| `minifig({ x, y, z, torso, legs, hair, hat })` | Una minifigura mirando hacia +y, con ojos y sonrisa. |
+| `minifig({ x, y, z, torso, legs, hair, hat, facing })` | Una minifigura con ojos y sonrisa, mirando hacia +y o hacia +x (`facing: "x"`). Con `legs: null` está sentada, con la cintura a la altura `z`. |
 | `pipe({ axis: "x" \| "y" \| "z", from, to, at, r, color })` | Tubería recta en milímetros. `at` son las otras dos coordenadas. Los codos son un `round` de 1×1 en la esquina. |
 | `boxFaces`, `cylinderFaces`, `frustumFaces`, `extrudeFaces(profile, "x" \| "y", from, to)`, `prismFaces` | Constructores de caras, en milímetros: cajas, cilindros, conos y pantallas, rampas y cuñas, cilindros tumbados (ruedas, ejes) y prismas. |
 | `solidSvg(faces, color, P)` | Dibuja un sólido suelto, fuera de la escena, por ejemplo el buje del molino. |

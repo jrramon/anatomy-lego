@@ -244,42 +244,53 @@ export function group({ parts, box, ...rest }) {
   };
 }
 
-// A minifigure standing at stud (x, y) on plate level z, facing +y (towards the viewer's left).
-export function minifig({ x, y, z = 0, torso = "red", legs = "blue", hair = "brown", hat, ...rest }) {
+// A minifigure standing at stud (x, y) on plate level z, facing +y (towards the viewer's left) or,
+// with facing: "x", towards +x (the viewer's right). With legs: null it is seated: its waist is at
+// z, as on a seat or in a kart.
+export function minifig({ x, y, z = 0, torso = "red", legs = "blue", hair = "brown", hat, facing = "y", ...rest }) {
   const cx = x * STUD;
   const cy = y * STUD;
   const z0 = z * PLATE;
   const skin = "skin";
-  const legParts = [-1, 1].map((side) => custom({ faces: boxFaces(cx + side * 0.2 - (side < 0 ? 3.8 : 0), cy - 2.6, z0, cx + side * 0.2 + (side > 0 ? 3.8 : 0), cy + 3, z0 + 11.2), color: legs }));
-  const hips = custom({ faces: boxFaces(cx - 4, cy - 2.6, z0 + 11.2, cx + 4, cy + 2.6, z0 + 13.4), color: legs });
-  const waist = z0 + 13.4;
-  const neck = waist + 11.6;
-  const torsoPart = custom({
-    faces: extrudeFaces([[-7.6, waist], [7.6, waist], [6, neck], [-6, neck]].map(([u, v]) => [cx + u, v]), "y", cy - 3.2, cy + 3.2),
-    color: torso,
-  });
-  const arm = (side) => {
-    const ax = cx + side * 7.4;
-    return custom({ faces: extrudeFaces([[-1.8, neck - 1.6], [1.8, neck - 1.6], [1.8 + side * 0.8, waist + 1.2], [-1.8 + side * 0.8, waist + 1.2]].map(([u, v]) => [ax + u, v]), "y", cy - 1.9, cy + 1.9), color: torso });
+  // Local coordinates: s across the shoulders, f towards the face.
+  const toWorld = (s, f) => (facing === "x" ? [cx + f, cy + s] : [cx + s, cy + f]);
+  const box = (s0, s1, f0, f1, za, zb) => {
+    const [ax, ay] = toWorld(s0, f0);
+    const [bx, by] = toWorld(s1, f1);
+    return boxFaces(Math.min(ax, bx), Math.min(ay, by), za, Math.max(ax, bx), Math.max(ay, by), zb);
   };
-  const hand = (side) => round({ x: (cx + side * 8.2) / STUD - 0.2, y: (cy + 0.8) / STUD - 0.2, z: (waist - 2) / PLATE, w: 0.4, h: 1.1, color: skin, studs: false, steps: 12 });
+  const slab = (profile, f0, f1) => (facing === "x" ? extrudeFaces(profile.map(([s, v]) => [cy + s, v]), "x", cx + f0, cx + f1) : extrudeFaces(profile.map(([s, v]) => [cx + s, v]), "y", cy + f0, cy + f1));
+  const seated = legs === null;
+  const legParts = seated ? [] : [-1, 1].map((side) => custom({ faces: box(side * 0.2 - (side < 0 ? 3.8 : 0), side * 0.2 + (side > 0 ? 3.8 : 0), -2.6, 3, z0, z0 + 11.2), color: legs }));
+  const hips = seated ? [] : [custom({ faces: box(-4, 4, -2.6, 2.6, z0 + 11.2, z0 + 13.4), color: legs })];
+  const waist = seated ? z0 : z0 + 13.4;
+  const neck = waist + 11.6;
+  const torsoPart = custom({ faces: slab([[-7.6, waist], [7.6, waist], [6, neck], [-6, neck]], -3.2, 3.2), color: torso });
+  const arm = (side) => custom({ faces: slab([[-1.8, neck - 1.6], [1.8, neck - 1.6], [1.8 + side * 0.8, waist + 1.2], [-1.8 + side * 0.8, waist + 1.2]].map(([u, v]) => [side * 7.4 + u, v]), -1.9, 1.9), color: torso });
+  const hand = (side) => {
+    const [hx, hy] = toWorld(side * 8.2, 0.8);
+    return round({ x: hx / STUD - 0.2, y: hy / STUD - 0.2, z: (waist - 2) / PLATE, w: 0.4, h: 1.1, color: skin, studs: false, steps: 12 });
+  };
   const headZ = neck + 0.8;
-  const head = custom({ faces: cylinderFaces(cx, cy, 4.6, headZ, headZ + 8.6, 20), color: skin, extra: (P) => faceSvg(cx, cy, 4.6, headZ, P) });
+  const head = custom({ faces: cylinderFaces(cx, cy, 4.6, headZ, headZ + 8.6, 20), color: skin, extra: (P) => faceSvg(cx, cy, 4.6, headZ, P, facing) });
   const neckPart = custom({ faces: cylinderFaces(cx, cy, 2.4, neck, headZ, 12), color: skin });
   const top = hat
     ? custom({ faces: cylinderFaces(cx, cy, 5.4, headZ + 7.8, headZ + 10.6, 20), color: hat, extra: (P) => studSvg(cx, cy, headZ + 10.6, hat, P, { r: 2.2 }) })
     : custom({ faces: frustumFaces(cx, cy, 5.2, headZ + 6.4, 4.2, headZ + 10.8, 20), color: hair });
-  const back = [arm(-1), arm(1)].filter(() => true);
+  const [lo, hi] = [toWorld(-9, -3.2), toWorld(9, 3.2)];
   return group({
     kind: "minifig",
     ...rest,
-    box: boxOf(cx - 9, cy - 3.2, z0, cx + 9, cy + 3.2, headZ + 11),
-    parts: [...legParts, hips, back[0], torsoPart, back[1], hand(-1), hand(1), neckPart, head, top],
+    box: boxOf(Math.min(lo[0], hi[0]), Math.min(lo[1], hi[1]), z0, Math.max(lo[0], hi[0]), Math.max(lo[1], hi[1]), headZ + 11),
+    parts: [...legParts, ...hips, arm(-1), torsoPart, arm(1), hand(-1), hand(1), neckPart, head, top],
   });
 }
-// Two eyes and a smile printed on the side of a minifigure head that faces +y.
-function faceSvg(cx, cy, r, z, projection) {
-  const on = (angle, height) => iso([cx + Math.sin(angle) * r * 1.01, cy + Math.cos(angle) * r * 1.01, z + height], projection);
+// Two eyes and a smile printed on the side of a minifigure head that faces +y (or +x).
+function faceSvg(cx, cy, r, z, projection, facing = "y") {
+  const on = (angle, height) => {
+    const [a, b] = [Math.sin(angle) * r * 1.01, Math.cos(angle) * r * 1.01];
+    return iso(facing === "x" ? [cx + b, cy + a, z + height] : [cx + a, cy + b, z + height], projection);
+  };
   const eyes = [-0.42, 0.42].map((angle) => on(angle, 5.4));
   const smile = Array.from({ length: 9 }, (_, step) => {
     const t = step / 8 - 0.5;
