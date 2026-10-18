@@ -172,7 +172,7 @@ lesson.night, lesson.dark, lesson.ease(desde, hasta, dt, tau)
 - **Colores con intención.** Los colores básicos de LEGO City. El amarillo brillante queda reservado para lo que viaja, para que el niño lo siga con el dedo.
 - **Movimiento tranquilo.** Seguimiento exponencial (`lesson.ease`), nada brusco, nada que aparezca de golpe: las rutas ya se desvanecen en los extremos. Con movimiento reducido, todo queda quieto en su estado final.
 - **Causa y efecto honestos.** Lo que pasa al pulsar un botón tiene que ser verdad o estar matizado en la nota para padres.
-- **Sin marcas.** No dibujes el logo de LEGO en los *studs* ni lo uses en títulos. Las lecciones son para uso personal: no las publiques en la galería de Anatomy.
+- **Sin marcas.** No dibujes el logo de LEGO en los *studs* ni lo uses en títulos. Las lecciones son para uso personal: no las publiques en ninguna galería pública.
 - **Rendimiento.** Una placa base de 30×20 son 600 *studs*. No pases de unas 300 piezas ni de 1 MB de HTML.
 
 ## Comprobación
@@ -187,6 +187,8 @@ Lee cada PNG que generes:
 - La consola tiene que salir limpia (`console: clean`).
 - La prueba final: imagina que se lo cuentas a un niño de cuatro años. ¿Sabe dónde mirar en cada paso? ¿Reconoce cada cosa? ¿Puede contestar la pregunta mirando el dibujo?
 
-## Más técnica
+## Referencia
 
-El kit isométrico que hay debajo es el de **Anatomy**, el proyecto original del que sale este. Su guía completa (tuberías, piezas torneadas, sombreadores WebGL, modo 3D, la auditoría de geometría) está en `references/anatomy.md`, con los detalles en `references/kit.md`, `references/craft.md` y el resto de `references/`. Úsala cuando una lección necesite algo que `brick.mjs` no tiene, como agua con brillos o fuego.
+`references/kit.md` tiene todas las funciones de todos los kits, con sus opciones, por capas: el núcleo isométrico (`iso-kit.mjs`), las piezas (`brick.mjs`), los kits especializados y la página (`lesson.mjs`). También explica las herramientas de comprobación y **cómo ampliar el kit** cuando una lección pida algo que no tiene. Consúltala cuando las tablas de arriba no basten: una opción que no aparece aquí, el orden exacto del `body` o las llamadas de `lesson` en la página.
+
+El núcleo isométrico viene de **Anatomy**, el proyecto del que sale este, con licencia MIT.
