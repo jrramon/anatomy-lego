@@ -267,9 +267,14 @@ export function minifig({ x, y, z = 0, torso = "red", legs = "blue", hair = "bro
   const neck = waist + 11.6;
   const torsoPart = custom({ faces: slab([[-7.6, waist], [7.6, waist], [6, neck], [-6, neck]], -3.2, 3.2), color: torso });
   const arm = (side) => custom({ faces: slab([[-1.8, neck - 1.6], [1.8, neck - 1.6], [1.8 + side * 0.8, waist + 1.2], [-1.8 + side * 0.8, waist + 1.2]].map(([u, v]) => [side * 7.4 + u, v]), -1.9, 1.9), color: torso });
+  // A hand is the C-shaped clip under the end of the sleeve, a little forward, with the hole that
+  // holds a tool showing on top.
   const hand = (side) => {
-    const [hx, hy] = toWorld(side * 8.2, 0.8);
-    return round({ x: hx / STUD - 0.2, y: hy / STUD - 0.2, z: (waist - 2) / PLATE, w: 0.4, h: 1.1, color: skin, studs: false, steps: 12 });
+    // Seated, the hands come forward over the lap, as if on a steering wheel.
+    const [hx, hy] = toWorld(side * 7.6, seated ? 3.8 : 1.7);
+    const top = waist + (seated ? 4.2 : 1.4);
+    const hole = (P) => `<path d="${pathOf(circleOf(hx, hy, 0.95, 14).map(([px, py]) => iso([px, py, top + 0.01], P)), true)}" fill="${mix(skin, "#000000", 0.62)}"/>`;
+    return custom({ faces: cylinderFaces(hx, hy, 1.9, top - 2.6, top, 16), color: skin, extra: hole });
   };
   const headZ = neck + 0.8;
   const head = custom({ faces: cylinderFaces(cx, cy, 4.6, headZ, headZ + 8.6, 20), color: skin, extra: (P) => faceSvg(cx, cy, 4.6, headZ, P, facing) });
