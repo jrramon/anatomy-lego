@@ -79,7 +79,7 @@ tree(37, 2, 1);
 tree(40, 6, 0.8);
 tree(54, 3, 1);
 tree(17, 2, 0.8);
-[[35, 13, "red"], [38, 11, "yellow"], [27, 19, "red"], [27, 20, "yellow"], [53, 20, "red"], [41, 20, "yellow"], [20, 18, "red"]].forEach(([x, y, color]) => add(0, b.round({ x, y, z: 1, w: 1, h: 1, color })));
+[[35, 13, "red"], [38, 11, "yellow"], [27, 19, "red"], [27, 20, "yellow"], [54.5, 19, "red"], [41, 20, "yellow"], [20, 18, "red"]].forEach(([x, y, color]) => add(0, b.round({ x, y, z: 1, w: 1, h: 1, color })));
 
 // Step 1: the mountain with snow on top, a cloud, the stream down its steps, the reservoir and its dam.
 MOUNTAIN.forEach((layer, index) => add(1, b.brick({ ...layer, z: 1 + index * LAYER_H, h: index === 3 ? 3 : LAYER_H, color: layer.color })));
