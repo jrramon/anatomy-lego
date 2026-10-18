@@ -40,12 +40,13 @@ export function sidewalk({ x, y, w, d, z = 0, h = 2, color = PAVEMENT, step = 0 
 
 // A round-leaved tree: a trunk of brown round bricks under a crown of green leaf balls.
 export function tree({ x, y, z = 1, size = 1, color = "bright-green", step = 0 }) {
-  const trunk = Math.round(3 + size * 2);
+  // LEGO City trees: a short trunk under a big crown.
+  const trunk = Math.max(2, Math.round(1 + size * 1.5));
   const out = [];
   for (let i = 0; i < trunk; i++) out.push(round({ x, y, z: z + i * 3, w: 1, h: 3, color: "brown", studs: false, steps: 14, step, offGrid: size % 1 !== 0 }));
   const [cx, cy] = [(x + 0.5) * STUD, (y + 0.5) * STUD];
   const base = (z + trunk * 3) * PLATE;
-  const r = 9 * size;
+  const r = 12 * size;
   out.push(group({
     kind: "crown",
     step,

@@ -5,6 +5,7 @@ import * as k from "../../kit/iso-kit.mjs";
 import * as b from "../../kit/brick.mjs";
 import * as l from "../../kit/lesson.mjs";
 import * as fig from "../../kit/lego-figure.mjs";
+import * as city from "../../kit/lego-city.mjs";
 import { auditOrExit } from "../../kit/lego-audit.mjs";
 import * as fx from "../../kit/lego-fx.mjs";
 
@@ -71,14 +72,8 @@ for (let row = 0; row < 2; row++) {
   }
 }
 for (let x = 0; x < LONG; x += 14) for (let y = 0; y < DEEP; y += 11) add(0, b.plate({ x, y, w: 14, d: 11, color: "bright-green" }));
-const tree = (x, y, size = 1) => {
-  add(0, b.round({ x, y, z: 1, w: 1, h: 3, color: "brown", studs: false }));
-  add(0, b.custom({ faces: b.frustumFaces((x + 0.5) * STUD, (y + 0.5) * STUD, 13 * size, 4 * PLATE, 1.5, 4 * PLATE + 34 * size, 20), color: "green" }));
-};
-tree(37, 2, 1);
-tree(40, 6, 0.8);
-tree(54, 3, 1);
-tree(17, 2, 0.8);
+[[37, 2, 1], [40, 6, 0.85], [54, 3, 1], [17, 2, 0.85]].forEach(([x, y, size]) => city.tree({ x, y, size }).forEach((piece) => add(0, piece)));
+city.bush({ x: 29.6, y: 20.2 }).forEach((piece) => add(0, piece));
 [[35, 13, "red"], [38, 11, "yellow"], [27, 19, "red"], [27, 20, "yellow"], [54.5, 19, "red"], [41, 20, "yellow"], [20, 18, "red"]].forEach(([x, y, color]) => add(0, b.round({ x, y, z: 1, w: 1, h: 1, color })));
 
 // Step 1: the mountain with snow on top, a cloud, the stream down its steps, the reservoir and its dam.
@@ -138,7 +133,8 @@ add(4, onWall(45.8, 46.8, 5, 8, "#9fd8f0"));
 add(4, pipeUp(TAP_X, WALL_Y * STUD + 2, GROUND, TAP_Z + 2, "blue", 1.6));
 add(4, b.custom({ faces: b.boxFaces(TAP_X - 4, WALL_Y * STUD + 0.4, 4.4 * PLATE, TAP_X + 4, WALL_Y * STUD + 4.6, 6.2 * PLATE), color: "white", overlaps: true }));
 for (let y = WALL_Y; y < DEEP; y++) add(4, b.tile({ x: 43, y, w: 2, d: 1, z: 1, color: "tan" }));
-add(4, fig.minifig({ x: 51.6, y: 20.4, z: 1, torso: "yellow", legs: "dark-gray", hair: "black" }));
+add(4, fig.minifig({ x: 51.6, y: 20.4, z: 1, torso: "yellow", legs: "dark-gray", hair: "black", print: "shirt", hairStyle: "ponytail" }));
+add(2, fig.minifig({ x: 22, y: 19.8, z: 1, torso: "orange", legs: "dark-gray", print: "hivis", hat: "yellow", hatStyle: "helmet" }));
 
 // Step 5: the tap with its red handle, and a bucket under it.
 add(5, pipeY(WALL_Y * STUD + 2, WALL_Y * STUD + 9, TAP_X, TAP_Z, "light-gray", 1.6));
@@ -238,7 +234,7 @@ const mouthSvg = (() => {
 
 const body = [
   `<defs>${l.tokenDef("w-mud", P, { color: "#a08a4e", r: 2.6 })}${l.tokenDef("w-clean", P, { color: "#4fc3ff", r: 2.6 })}${l.tokenDef("w-drop", P, { color: "#7fd4ff", r: 1.6 })}</defs>`,
-  `<g class="lb-scene">${b.sceneSvg(pieces, P)}</g>`,
+  `<g class="lb-scene">${b.sceneSvg(pieces, P, { shadows: true })}</g>`,
   `<g class="lb-piece" data-step="4" style="--i:0">${mainSvg}</g>`,
   `<g class="lb-piece" data-step="5" style="--i:4" data-id="bucket">${mouthSvg}</g>`,
   `<path data-part="jet" class="lb-jet" d="${k.pathOf(jet.map(at))}"/>`,

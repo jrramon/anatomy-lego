@@ -38,7 +38,8 @@ for (let level = 0; level < 3; level++) add(0, b.round({ x: SUN[0] / STUD - 1, y
 add(0, b.round({ x: EARTH[0] / STUD - 2, y: EARTH[1] / STUD - 2, z: 1, w: 4, h: 1, color: "dark-gray" }));
 const AXLE_TOP = CENTRE_Z - EARTH_R;
 add(0, b.pipe({ axis: "z", from: 2 * PLATE, to: AXLE_TOP + 1, at: EARTH, r: 1.2, color: "light-gray" }));
-add(0, fig.minifig({ x: 17, y: 13.4, z: 1, torso: "green", legs: "blue", hair: "brown" }));
+add(0, fig.minifig({ x: 17, y: 13.4, z: 1, torso: "lime", legs: "blue", hair: "brown", print: "shirt", child: true }));
+add(0, fig.minifig({ x: 13.5, y: 14, z: 1, torso: "red", legs: "dark-gray", hair: "#7a3f1d", hairStyle: "ponytail", print: "jacket" }));
 
 // Step 1: the Sun, a big yellow ball on its stand.
 const SUN_Z = 11 * PLATE + SUN_R;
@@ -137,7 +138,7 @@ const body = [
   `<defs><radialGradient id="sun-glow"><stop offset=".55" stop-color="#ffd23a" stop-opacity=".55"/><stop offset="1" stop-color="#ffb000" stop-opacity="0"/></radialGradient>${l.tokenDef("light", P, { color: "#ffe066", r: 1.5, h: 1 })}</defs>`,
   `<g class="lb-stars">${stars}</g>`,
   `<g class="lb-piece" data-step="1" style="--i:0"><circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="${(SUN_R * 1.9 * scale).toFixed(1)}" fill="url(#sun-glow)"/></g>`,
-  `<g class="lb-scene">${b.sceneSvg(pieces, P)}</g>`,
+  `<g class="lb-scene">${b.sceneSvg(pieces, P, { shadows: true })}</g>`,
   `<g class="lb-piece" data-step="2" style="--i:1" data-id="earth">${s.spinSvg("earth")}</g>`,
   `<g data-part="tokens"></g>`,
 ];

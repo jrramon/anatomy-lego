@@ -7,6 +7,8 @@ import * as r from "../../kit/lego-round.mjs";
 import * as t from "../../kit/lego-tube.mjs";
 import * as l from "../../kit/lesson.mjs";
 import { auditOrExit } from "../../kit/lego-audit.mjs";
+import * as fig from "../../kit/lego-figure.mjs";
+import * as city from "../../kit/lego-city.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const { STUD, PLATE } = b;
@@ -95,6 +97,9 @@ for (let x = 4; x < LONG; x += 8) {
   add(0, r.turned({ profile: [[0, 0], [0, 2.9], [7, 2.2], [7, 0]], at: [wx + 15.8, wy, 48], axis: "x", color: "orange", steps: 20, kind: "sock", overlaps: true }));
 }
 [[3, 2, "red"], [9, 4, "yellow"], [26, 1, "red"], [33, 3, "yellow"], [36, 4, "red"], [12, 20, "yellow"], [29, 19, "red"], [44, 20, "yellow"], [21, 21, "red"]].forEach(([x, y, color]) => add(0, b.round({ x, y, z: 1, w: 1, h: 1, color })));
+[[24, 2.4], [46, 20.6]].forEach(([x, y]) => city.bush({ x, y }).forEach((piece) => add(0, piece)));
+add(0, fig.minifig({ x: 34, y: 20.8, z: 1, torso: "#1b2a44", legs: "#1b2a44", print: "police", hat: "#1b2a44", hatStyle: "police" }));
+add(2, fig.minifig({ x: 15, y: 2.2, z: 1, torso: "orange", legs: "dark-gray", print: "hivis", hat: "yellow", hatStyle: "helmet" }));
 
 // Step 1: the plane. A white fuselage turned along x, red wings with a real wing section, a tail,
 // a windscreen, and three wheels on struts.
@@ -159,13 +164,13 @@ const windowsSvg = WINDOWS.map((x, i) => {
 
 const body = [
   `<defs>${l.tokenDef("air", P, { color: "#ffffff", r: 1.7, h: 1.2 })}${l.tokenDef("fuel", P, { color: "#ff9a1f", r: 1.2, h: 1 })}</defs>`,
-  `<g class="lb-scene">${b.sceneSvg(lane.behind, P)}</g>`,
+  `<g class="lb-scene">${b.sceneSvg(lane.behind, P, { shadows: true })}</g>`,
   `<g data-part="plane" data-id="plane">
     ${b.sceneSvg(plane, P)}
     <g class="lb-piece" data-step="1" style="--i:12">${windowsSvg}<g data-part="prop"><path/><path/></g></g>
     <g data-part="plane-tokens" class="lb-air"></g>
   </g>`,
-  `<g class="lb-scene">${b.sceneSvg(lane.ahead, P)}</g>`,
+  `<g class="lb-scene">${b.sceneSvg(lane.ahead, P, { shadows: true })}</g>`,
   `<g data-part="tokens"></g>`,
 ];
 

@@ -8,6 +8,7 @@ import * as t from "../../kit/lego-tube.mjs";
 import * as s from "../../kit/lego-spin.mjs";
 import * as fx from "../../kit/lego-fx.mjs";
 import * as fig from "../../kit/lego-figure.mjs";
+import * as city from "../../kit/lego-city.mjs";
 import * as l from "../../kit/lesson.mjs";
 import { auditOrExit } from "../../kit/lego-audit.mjs";
 
@@ -48,7 +49,10 @@ add(0, b.tile({ x: 36, y: 1, z: 1, w: 8, d: 8, color: "light-gray" }));
 [[1, 2, "red"], [6, 3, "yellow"], [12, 1, "red"], [24, 3, "yellow"], [30, 2, "red"], [48, 3, "yellow"], [54, 6, "red"], [40, 18, "yellow"], [52, 18, "red"]].forEach(([x, y, color]) =>
   add(0, b.round({ x, y, z: 1, w: 1, h: 1, color })),
 );
-add(0, fig.minifig({ x: 27, y: 18.8, z: 2, torso: "orange", legs: "dark-gray", hat: "yellow" }));
+add(0, fig.minifig({ x: 27, y: 18.8, z: 2, torso: "orange", legs: "dark-gray", print: "hivis", hat: "yellow", hatStyle: "helmet" }));
+add(4, fig.minifig({ x: 31, y: 15.2, z: 2, torso: "white", legs: "#1b2a44", print: "shirt", hat: "white", hatStyle: "helmet", hair: "black" }));
+[[7, 4, 1], [52, 4, 0.9]].forEach(([x, y, size]) => city.tree({ x, y, size }).forEach((piece) => add(0, piece)));
+city.bush({ x: 1.6, y: 6.4 }).forEach((piece) => add(0, piece));
 
 // Step 1: the fire. A grate with logs, a back wall to shelter it; the flame is drawn live.
 add(1, b.plate({ x: 5, y: 10, z: 2, w: 6, d: 4, color: "dark-gray", studs: false }));
@@ -148,7 +152,7 @@ const routes = {
 const body = [
   `<defs>${l.tokenDef("steam", P, { color: "#ffffff", r: 1.8, h: 1 })}${l.tokenDef("water", P, { color: "#4fc3ff", r: 1.8, h: 1 })}${l.tokenDef("power", P, { color: "#ffd83a", r: 1.4, h: 1 })}
     <radialGradient id="fire-glow"><stop offset="0" stop-color="#fff0a0" stop-opacity=".95"/><stop offset=".5" stop-color="#ff8a1f" stop-opacity=".7"/><stop offset="1" stop-color="#ff4a00" stop-opacity="0"/></radialGradient></defs>`,
-  `<g class="lb-scene">${b.sceneSvg(pieces, P)}</g>`,
+  `<g class="lb-scene">${b.sceneSvg(pieces, P, { shadows: true })}</g>`,
   (() => {
     const [fxp, fyp] = at([FIRE[0], FIRE[1], 18]);
     const { k: scale } = k.cameraOf(P);
