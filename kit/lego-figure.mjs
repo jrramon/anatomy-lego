@@ -49,8 +49,9 @@ export function minifig({ x, y, z = 0, torso = "red", legs = "blue", hair = "bro
   if (!seated) {
     [-1, 1].forEach((side) => {
       const [s0, s1] = side < 0 ? [-7.6, -0.2] : [0.2, 7.6];
-      parts.push(part(box(s0, s1, -3.9, 3.3, z0 + 3.2, z0 + 11.6), legs));
-      parts.push(part(box(s0, s1, -3.9, 4.5, z0, z0 + 3.2), legs));
+      // The foot first: the leg stands on it, so only a small step of the foot shows in front.
+      parts.push(part(box(s0, s1, -3.9, 4.6, z0, z0 + 3.2), legs));
+      parts.push(part(box(s0, s1, -3.9, 3.0, z0 + 3.2, z0 + 11.6), legs));
     });
     parts.push(part(box(-7.8, 7.8, -3.9, 3.9, z0 + 11.6, z0 + 14.2), legs));
     waist = z0 + 14.2;
