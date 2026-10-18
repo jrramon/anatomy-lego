@@ -163,7 +163,7 @@ function lessonRuntime({ steps, projection }) {
       lesson.step = Math.max(0, Math.min(steps.length - 1, next));
       const step = steps[lesson.step];
       if (step.night === true || step.night === false) lesson.night = step.night;
-      pieces.forEach((piece) => piece.toggleAttribute("data-hidden", Number(piece.dataset.step) > lesson.step));
+      pieces.forEach((piece) => piece.toggleAttribute("data-hidden", Number(piece.dataset.step) > lesson.step || (piece.dataset.until !== undefined && lesson.step > Number(piece.dataset.until))));
       ui.step.textContent = `Paso ${lesson.step + 1} de ${steps.length}`;
       ui.corner.textContent = ui.step.textContent;
       ui.say.textContent = step.say;

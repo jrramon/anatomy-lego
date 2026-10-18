@@ -9,7 +9,12 @@ compatibility: Escrita para Claude Code. Necesita Node.js 20.10+, y Chrome o Chr
 
 Esta skill convierte una pregunta de un niño pequeño en una **escena LEGO City que se construye paso a paso** mientras un adulto cuenta la historia. El niño no lee: mira, señala, contesta y toca. El adulto lee en voz alta lo que pone en «Dile», hace la pregunta de «Pregúntale» y, si quiere saber más, tiene la explicación de verdad en «Para mamá o papá».
 
-Hay un ejemplo completo: `examples/farola/` («¿Cómo llega la luz a la farola?»). Ábrelo antes de empezar y cópialo como plantilla. Se construye con `node examples/farola/build.mjs`, que escribe `farola.html` junto al script.
+Hay tres ejemplos completos. Abre el más parecido antes de empezar y cópialo como plantilla:
+- `examples/farola/`: «¿Cómo llega la luz a la farola?». Flujos que dependen del día y la noche, y cable en el corte de tierra.
+- `examples/agua/`: «¿De dónde sale el agua del grifo?». Tuberías (`pipe`), piezas que cambian de color por el camino y la demanda del pueblo frente a la de la casa.
+- `examples/avion/`: «¿Por qué vuela un avión?». Un objeto que se mueve por la escena con su propio aire, que también se mueve con él. Usa piezas redondas (fuselaje, ruedas, cúpula), una manguera que solo aparece en un paso (`until`) y un modelo físico con un caso que falla a propósito (demasiado peso).
+
+Cada uno se construye con `node examples/<nombre>/build.mjs`, que escribe la página junto al script. Con `--audit` pasa además la auditoría.
 
 ## La idea que importa
 
@@ -67,7 +72,7 @@ Las medidas son las de LEGO de verdad, en milímetros: un *stud* mide 8 de ancho
 | `studSvg(cx, cy, z, color, P)` | Un *stud* suelto. |
 | `sceneSvg(pieces, P)` | Ordena todas las piezas (las de detrás primero) y las envuelve para los pasos. |
 
-Cualquier pieza acepta `step`, el paso en que aparece, e `id`, que pasa a `data-id` y sirve para clics y estilos. Colores: `red`, `yellow`, `blue`, `green`, `bright-green`, `lime`, `white`, `black`, `light-gray`, `dark-gray`, `tan`, `dark-tan`, `brown`, `orange`, `azure`, `skin`, `trans-yellow` y `trans-clear`, o cualquier `#rrggbb`. El sombreado es el de los folletos de instrucciones: arriba claro, la cara +y media y la cara +x oscura, con contorno fino.
+Cualquier pieza acepta `step`, el paso en que aparece; `until`, el último paso en que se ve (una manguera que se retira); e `id`, que pasa a `data-id` y sirve para clics y estilos. Colores: `red`, `yellow`, `blue`, `green`, `bright-green`, `lime`, `white`, `black`, `light-gray`, `dark-gray`, `tan`, `dark-tan`, `brown`, `orange`, `azure`, `skin`, `trans-yellow` y `trans-clear`, o cualquier `#rrggbb`. El sombreado es el de los folletos de instrucciones: arriba claro, la cara +y media y la cara +x oscura, con contorno fino.
 
 ### `kit/lego-round.mjs`: piezas redondas
 
@@ -132,6 +137,7 @@ lesson.night, lesson.dark, lesson.ease(desde, hasta, dt, tau)
 - **Una cosa importante a la vista.** Lo que hay que mirar en cada paso no puede quedar escondido detrás de otra pieza. Si algo va bajo tierra, va en la cara de corte delantera.
 - **Las piezas no se atraviesan.** El orden de pintado se basa en que las cajas de las piezas no se cruzan. Si dos se cruzan (un brazo que atraviesa un poste), pártelas o usa `group`. Lo que cruza la escena de lado a lado (cables, aspas) no va como pieza: va encima, en un grupo propio.
 - **Lo que viaja, más pequeño que su tubo.** Una pieza viajera más ancha que la tubería o el cable la tapa: usa `r` de 1,6 en tuberías finas y de 2,6-3,2 en las gruesas o en cables al aire.
+- **Lo que se mueve por la escena va aparte.** Un avión o un coche que recorre la escena no entra en `sceneSvg` con el resto: se ordena solo (`sceneSvg(susPiezas, P)`), va en su propio grupo por encima y se mueve con `translateAlong`. Lo que viaja con él (su aire) va en una capa dentro de ese grupo (`lesson.route(…, { layer })`). Pásalo igualmente a la auditoría en su posición de reposo.
 - **Cada cosa aparece en su paso.** Lo que pertenece a algo (el camino de la casa, el contador de la pared) va en el mismo `step` que ese algo, no en el paso 0.
 - **Colores con intención.** Los colores básicos de LEGO City. El amarillo brillante queda reservado para lo que viaja, para que el niño lo siga con el dedo.
 - **Movimiento tranquilo.** Seguimiento exponencial (`lesson.ease`), nada brusco, nada que aparezca de golpe: las rutas ya se desvanecen en los extremos. Con movimiento reducido, todo queda quieto en su estado final.

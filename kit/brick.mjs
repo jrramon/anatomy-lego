@@ -348,7 +348,7 @@ export function sceneSvg(pieces, projection) {
       const step = piece.step ?? 0;
       const index = count.get(step) ?? 0;
       count.set(step, index + 1);
-      const data = piece.id ? ` data-id="${piece.id}"` : "";
+      const data = (piece.id ? ` data-id="${piece.id}"` : "") + (piece.until !== undefined ? ` data-until="${piece.until}"` : "");
       return `<g class="lb-piece" data-step="${step}"${data} style="--i:${index}">${piece.svg(projection)}</g>`;
     })
     .join("");
