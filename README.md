@@ -1,3 +1,5 @@
+> **Este fork: lecciones LEGO para peques.** Esta versión convierte Anatomy en `/lego`: explica a niños que aún no leen cómo funciona el mundo con escenas LEGO City que se construyen paso a paso mientras un adulto cuenta la historia. Mira [`SKILL.md`](SKILL.md) y el ejemplo [`examples/farola`](examples/farola) («¿Cómo llega la luz a la farola?»). Lo que sigue es el README del proyecto original.
+
 <h1 align="center">Anatomy</h1>
 
 <p align="center"><b>A Claude skill that explains an idea by building it as a real, working object.</b><br>Also runs in Antigravity, OpenCode, Codex and MiniMax Code.<br>Crafted, interactive isometric figures with many small precise parts, in SVG, WebGL and 3D.</p>

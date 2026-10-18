@@ -32,6 +32,9 @@ jobs:
           npm install --prefix "$test_deps" --no-audit --no-fund --ignore-scripts react@19.3.0 react-dom@19.3.0 typescript@5.9.3 esbuild@0.28.2
           NODE_PATH="$test_deps/node_modules" node --test scripts/*.test.mjs
 
+      - name: Farola (LEGO)
+        run: node examples/farola/build.mjs
+
       - name: Dial indicator
         run: |
           node examples/dial-indicator/build.mjs

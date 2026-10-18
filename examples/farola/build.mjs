@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as k from "../../kit/iso-kit.mjs";
 import * as b from "../../kit/brick.mjs";
-import { kitScript } from "../../scripts/inline-kit.mjs";
+import * as l from "../../kit/lesson.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const { STUD, PLATE, GAP } = b;
@@ -183,42 +183,11 @@ const cableSvg = (points, extra = "") => `<path class="lb-cable" d="${k.pathOf(p
 const hub = b.solidSvg(b.extrudeFaces(b.circleOf(TURBINE[0] * STUD, HUB_Z, 4.6, 18), "y", 14.4 * STUD, ROTOR_Y + 1.6), "white", P);
 const nose = b.solidSvg(b.extrudeFaces(b.circleOf(TURBINE[0] * STUD, HUB_Z, 2.6, 14), "y", ROTOR_Y + 1.6, ROTOR_Y + 3.4), "light-gray", P);
 
-// Glows: a halo around each bulb and a pool of light on the pavement under it.
-const glows = LAMPS.map((cx) => {
-  const [bx, by] = at([cx * STUD, BULB_Y, BULB_Z]);
-  const [gx, gy] = at([cx * STUD, BULB_Y, SIDEWALK_H * PLATE]);
-  const { k: scale, sinE } = k.cameraOf(P);
-  const r = 34 * scale;
-  return `<ellipse cx="${gx.toFixed(1)}" cy="${gy.toFixed(1)}" rx="${r.toFixed(1)}" ry="${(r * sinE).toFixed(1)}" fill="url(#pool)"/><circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="${(16 * scale).toFixed(1)}" fill="url(#halo)"/>`;
-}).join("");
-
-// Energy pieces: glowing yellow round plates, big on the high-voltage line and small after the
-// transformer. Each is drawn once at the world origin and moved with a translate.
-const origin = at([0, 0, 0]);
-const energy = (id, r) => `<g id="${id}">${b.studSvg(0, 0, -1, "#ffd83a", P, { r, h: 1.8 })}</g>`;
-
-const sky = `
-<g class="lb-sky" data-sky role="button" aria-label="Día o noche">
-  <g class="lb-sun" transform="translate(${WIDTH - 80} 74)">
-    ${Array.from({ length: 10 }, (_, i) => {
-      const a = (i / 10) * Math.PI * 2;
-      return `<path d="M${(Math.cos(a) * 26).toFixed(1)} ${(Math.sin(a) * 26).toFixed(1)}L${(Math.cos(a) * 36).toFixed(1)} ${(Math.sin(a) * 36).toFixed(1)}"/>`;
-    }).join("")}
-    <circle r="19"/>
-  </g>
-  <g class="lb-moon" transform="translate(${WIDTH - 80} 74)"><path d="M6 -20a20 20 0 1 0 14 30a16 16 0 1 1 -14 -30z"/></g>
-  <circle r="40" cx="${WIDTH - 80}" cy="74" fill="transparent"/>
-</g>
-<g class="lb-stars">${[[90, 60], [180, 30], [300, 80], [420, 40], [560, 70], [680, 30], [780, 110], [860, 170], [500, 140], [240, 150]]
-  .map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="${i % 3 ? 1.4 : 2}"/>`)
-  .join("")}</g>`;
+// A halo around each bulb and a pool of light on the pavement under it.
+const glows = LAMPS.map((cx) => l.glowSvg(P, [cx * STUD, BULB_Y, BULB_Z], SIDEWALK_H * PLATE)).join("");
 
 const body = [
-  `<defs>
-    <radialGradient id="halo"><stop offset="0" stop-color="#fff6c2"/><stop offset=".35" stop-color="#ffd84a" stop-opacity=".75"/><stop offset="1" stop-color="#ffb800" stop-opacity="0"/></radialGradient>
-    <radialGradient id="pool"><stop offset="0" stop-color="#ffe27a" stop-opacity=".9"/><stop offset=".6" stop-color="#ffc93a" stop-opacity=".35"/><stop offset="1" stop-color="#ffb800" stop-opacity="0"/></radialGradient>
-    ${energy("e-big", 3.2)}${energy("e-small", 1.9)}
-  </defs>`,
+  `<defs>${l.GLOW_DEFS}${l.tokenDef("e-big", P, { r: 3.2 })}${l.tokenDef("e-small", P, { r: 1.9 })}</defs>`,
   `<g class="lb-scene">${b.sceneSvg(pieces, P)}</g>`,
   `<g class="lb-piece" data-step="2" style="--i:8">${wires.map(wireSvg).join("")}</g>`,
   `<g class="lb-piece" data-step="4" style="--i:0">${cableSvg(cable)}${risers.map((r) => cableSvg(r)).join("")}${[...risers.map((r) => r[1]), cable[0]].map((p) => {
@@ -226,13 +195,13 @@ const body = [
     return `<circle class="lb-plug" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2"/>`;
   }).join("")}</g>`,
   `<g class="lb-piece" data-step="1" data-id="turbine" style="--i:14"><g data-part="blades"><path/><path/><path/></g>${hub}${nose}</g>`,
-  `<rect class="lb-night" x="-600" y="-600" width="${WIDTH + 1200}" height="${HEIGHT + 1200}"/>`,
-  sky,
+  l.nightSvg(WIDTH, HEIGHT),
+  l.skySvg(WIDTH),
   `<g class="lb-glow">${glows}</g>`,
-  `<g data-part="energy"></g>`,
+  `<g data-part="tokens"></g>`,
 ];
 
-const svg = k.figureSvg({
+const svg = l.lessonSvg({
   width: WIDTH,
   height: HEIGHT,
   label:
@@ -285,242 +254,85 @@ const STEPS = [
   },
 ];
 
-const live = `
-const P = ${JSON.stringify(P)};
-const STEPS = ${JSON.stringify(STEPS)};
+// The story's model: wind turns the rotor, the rotor's speed is the power on the line, and the
+// street cable only carries current while the lamps are on, which needs both night and power.
+const script = `
 const HUB = ${JSON.stringify([TURBINE[0] * STUD, ROTOR_Y, HUB_Z])}, BLADE = ${BLADE};
-const ORIGIN = ${JSON.stringify(origin)};
-const WIRES = ${JSON.stringify(wires)};
-const TOWER = ${JSON.stringify(tower)};
-const CABLE = ${JSON.stringify(cable)};
-const RISERS = ${JSON.stringify(risers)};
-const figure = document.querySelector(".lb-lesson");
-const svg = figure.querySelector("svg");
-const pieces = [...svg.querySelectorAll(".lb-piece")];
+const svg = document.querySelector(".lb-lesson svg");
 const blades = [...svg.querySelectorAll('[data-part="blades"] path')];
-const energyLayer = svg.querySelector('[data-part="energy"]');
-const night = svg.querySelector(".lb-night");
 const glow = svg.querySelector(".lb-glow");
-const stars = svg.querySelector(".lb-stars");
-const sun = svg.querySelector(".lb-sun");
-const moon = svg.querySelector(".lb-moon");
 const eyes = [...svg.querySelectorAll('[data-id="eye"]')];
-const still = matchMedia("(prefers-reduced-motion: reduce)");
-const ui = {
-  step: document.querySelector("[data-step-label]"),
-  say: document.querySelector("[data-say]"),
-  ask: document.querySelector("[data-ask]"),
-  note: document.querySelector("[data-note]"),
-  prev: document.querySelector('[data-action="prev"]'),
-  next: document.querySelector('[data-action="next"]'),
-  night: document.querySelector('[data-action="night"]'),
-  wind: document.querySelector('[data-action="wind"]'),
-  readout: document.querySelector("[data-readout]"),
-  corner: document.querySelector('[data-corner="fig"]'),
-};
-
-// A route is a polyline through the world; pieces ride it at even spacing.
-const lengthOf = (pts) => pts.slice(1).reduce((sum, p, i) => sum + Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1], p[2] - pts[i][2]), 0);
-const pointAt = (pts, s) => {
-  for (let i = 1; i < pts.length; i++) {
-    const [a, b] = [pts[i - 1], pts[i]];
-    const l = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
-    if (s <= l || i === pts.length - 1) { const t = Math.min(1, s / (l || 1)); return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
-    s -= l;
-  }
-  return pts[pts.length - 1];
-};
-const NS = "http://www.w3.org/2000/svg";
-const routes = [
-  { pts: TOWER, kind: "big", gap: 22, speed: 50, feed: "tower" },
-  ...WIRES.map((pts) => ({ pts, kind: "big", gap: 34, speed: 70, feed: "line" })),
-  { pts: CABLE, kind: "small", gap: 18, speed: 46, feed: "street" },
-  ...RISERS.map((pts) => ({ pts, kind: "small", gap: 12, speed: 30, feed: "street" })),
-].map((route) => {
-  const length = lengthOf(route.pts);
-  const count = Math.ceil(length / route.gap);
-  const nodes = Array.from({ length: count }, () => {
-    const use = document.createElementNS(NS, "use");
-    use.setAttribute("href", route.kind === "big" ? "#e-big" : "#e-small");
-    energyLayer.appendChild(use);
-    return use;
-  });
-  return { ...route, length, nodes, offset: 0, level: 0 };
-});
-
-const state = { step: 0, wind: true, night: false, dark: 0, spin: 0, angle: 0.3, power: 0, lit: 0, line: 0, street: 0 };
-
-function setStep(next) {
-  state.step = Math.max(0, Math.min(STEPS.length - 1, next));
-  const step = STEPS[state.step];
-  if (step.night !== null) state.night = step.night;
-  if (state.step <= 1) state.wind = true;
-  pieces.forEach((piece) => piece.toggleAttribute("data-hidden", Number(piece.dataset.step) > state.step));
-  ui.step.textContent = "Paso " + (state.step + 1) + " de " + STEPS.length;
-  ui.corner.textContent = ui.step.textContent;
-  ui.say.textContent = step.say;
-  ui.ask.textContent = step.ask;
-  ui.note.textContent = step.note;
-  ui.prev.disabled = state.step === 0;
-  ui.next.disabled = state.step === STEPS.length - 1;
-  figure.dataset.step = String(state.step);
-  run();
-}
-const toggleNight = () => { state.night = !state.night; run(); };
-const toggleWind = () => { state.wind = !state.wind; run(); };
+const tower = lesson.route(${JSON.stringify(tower)}, { token: "#e-big", gap: 22, speed: 50 });
+const line = ${JSON.stringify(wires)}.map((pts) => lesson.route(pts, { token: "#e-big", gap: 34, speed: 70 }));
+const street = [${JSON.stringify(cable)}, ...${JSON.stringify(risers)}].map((pts, i) => lesson.route(pts, { token: "#e-small", gap: i ? 12 : 18, speed: i ? 30 : 46 }));
+const state = { wind: true, spin: 0, angle: 0.3, lit: 0, line: 0, street: 0 };
 
 function bladesAt(angle) {
   return [0, 1, 2].map((i) => {
     const a = angle + (i * Math.PI * 2) / 3;
-    const u = [Math.cos(a), 0, Math.sin(a)];
-    const v = [-Math.sin(a), 0, Math.cos(a)];
-    const pt = (along, across) => [HUB[0] + u[0] * along + v[0] * across, HUB[1], HUB[2] + u[2] * along + v[2] * across];
-    return pathOf([pt(3, -2.6), pt(14, -4.4), pt(BLADE, -1.2), pt(BLADE + 1.5, 0.4), pt(14, 2.2), pt(3, 2.6)].map((p) => iso(p, P)), true);
+    const pt = (along, across) => [HUB[0] + Math.cos(a) * along - Math.sin(a) * across, HUB[1], HUB[2] + Math.sin(a) * along + Math.cos(a) * across];
+    return pathOf([pt(3, -2.6), pt(14, -4.4), pt(BLADE, -1.2), pt(BLADE + 1.5, 0.4), pt(14, 2.2), pt(3, 2.6)].map((p) => iso(p, ${JSON.stringify(P)})), true);
   });
 }
+const toggleWind = () => { if (lesson.step >= 1) state.wind = !state.wind; };
+lesson.onStep((step) => { if (step <= 1) state.wind = true; });
+lesson.button("night", () => lesson.toggleNight(), () => (lesson.night ? "☀️ Que sea de día" : "🌙 Que sea de noche"));
+const windButton = lesson.button("wind", toggleWind, () => (state.wind ? "✋ Parar el viento" : "💨 Soplar viento"));
+lesson.key("v", toggleWind);
+lesson.click('[data-id="turbine"]', toggleWind);
 
-let frame = 0, last = 0;
-const ease = (from, to, dt, tau) => (still.matches ? to : from + (to - from) * (1 - Math.exp(-dt / tau)));
-function tick(now) {
-  const dt = last ? Math.min((now - last) / 1000, 1 / 20) : 1 / 60;
-  last = now;
-  const s = state.step;
-  state.dark = ease(state.dark, state.night ? 1 : 0, dt, 0.7);
-  state.spin = ease(state.spin, s >= 1 && state.wind ? 1 : 0, dt, 0.9);
+lesson.every((dt) => {
+  const s = lesson.step;
+  state.spin = lesson.ease(state.spin, s >= 1 && state.wind ? 1 : 0, dt, 0.9);
+  if (state.spin < 0.001) state.spin = 0;
   state.angle += state.spin * dt * 2.2;
-  state.power = state.spin;
-  const lampsOn = s >= 4 && state.dark > 0.55 && state.power > 0.35;
-  state.lit = ease(state.lit, lampsOn ? 1 : 0, dt, 0.35);
-  state.line = ease(state.line, s >= 2 ? state.power : 0, dt, 0.4);
-  state.street = ease(state.street, lampsOn ? 1 : 0, dt, 0.4);
-
-  blades.forEach((path, i) => path.setAttribute("d", bladesAt(state.angle)[i]));
-  night.style.opacity = (state.dark * 0.72).toFixed(3);
-  stars.style.opacity = state.dark.toFixed(3);
-  sun.style.opacity = (1 - state.dark).toFixed(3);
-  moon.style.opacity = state.dark.toFixed(3);
+  const lampsOn = s >= 4 && lesson.dark > 0.55 && state.spin > 0.35;
+  state.lit = lesson.ease(state.lit, lampsOn ? 1 : 0, dt, 0.35);
+  state.line = lesson.ease(state.line, s >= 2 ? state.spin : 0, dt, 0.4);
+  state.street = lesson.ease(state.street, lampsOn ? 1 : 0, dt, 0.4);
+  const paths = bladesAt(state.angle);
+  blades.forEach((path, i) => path.setAttribute("d", paths[i]));
   glow.style.opacity = state.lit.toFixed(3);
-  eyes.forEach((eye) => eye.toggleAttribute("data-on", state.dark > 0.55));
-  figure.toggleAttribute("data-night", state.dark > 0.5);
+  eyes.forEach((eye) => eye.toggleAttribute("data-on", lesson.dark > 0.55));
+  tower.level = state.spin;
+  line.forEach((route) => (route.level = state.line));
+  street.forEach((route) => (route.level = state.street));
+  windButton.disabled = s < 1;
+  return state.spin > 0 || Math.abs(state.lit - (lampsOn ? 1 : 0)) > 0.001;
+});
 
-  for (const route of routes) {
-    const level = route.feed === "tower" ? state.power : route.feed === "line" ? state.line : state.street;
-    route.offset = (route.offset + route.speed * level * dt) % route.gap;
-    route.nodes.forEach((node, i) => {
-      const s = route.offset + i * route.gap;
-      const edge = Math.min(s, route.length - s) / 8;
-      const alpha = Math.max(0, Math.min(1, edge)) * level;
-      if (alpha < 0.02 || s > route.length) { node.setAttribute("opacity", "0"); return; }
-      const [x, y] = iso(pointAt(route.pts, s), P);
-      node.setAttribute("transform", "translate(" + (x - ORIGIN[0]).toFixed(2) + " " + (y - ORIGIN[1]).toFixed(2) + ")");
-      node.setAttribute("opacity", alpha.toFixed(2));
-    });
-  }
-
-  const text = [
+lesson.readout(() => {
+  const s = lesson.step;
+  return [
     s >= 1 ? (state.wind ? "💨 hay viento" : "🍃 sin viento") : "",
     s >= 2 ? (state.line > 0.3 ? "⚡ electricidad viajando" : "⚡ sin electricidad") : "",
     s >= 4 ? (state.lit > 0.5 ? "💡 farolas encendidas" : "💡 farolas apagadas") : "",
   ].filter(Boolean).join("  ·  ");
-  if (ui.readout.textContent !== text) ui.readout.textContent = text;
-  ui.night.textContent = state.night ? "☀️ Que sea de día" : "🌙 Que sea de noche";
-  ui.wind.textContent = state.wind ? "✋ Parar el viento" : "💨 Soplar viento";
-  ui.wind.disabled = s < 1;
-
-  const moving = state.spin > 0.001 || Math.abs(state.dark - (state.night ? 1 : 0)) > 0.001 || Math.abs(state.lit - (lampsOn ? 1 : 0)) > 0.001 || state.line > 0.001 || state.street > 0.001;
-  frame = moving && !document.hidden ? requestAnimationFrame(tick) : 0;
-}
-function run() { if (!frame) { last = 0; frame = requestAnimationFrame(tick); } }
-
-ui.prev.addEventListener("click", () => setStep(state.step - 1));
-ui.next.addEventListener("click", () => setStep(state.step + 1));
-ui.night.addEventListener("click", toggleNight);
-ui.wind.addEventListener("click", toggleWind);
-svg.addEventListener("click", (event) => {
-  if (event.target.closest("[data-sky]")) toggleNight();
-  else if (event.target.closest('[data-id="turbine"]') && state.step >= 1) toggleWind();
 });
-document.addEventListener("keydown", (event) => {
-  if (event.key === "ArrowRight" || event.key === " ") { event.preventDefault(); setStep(state.step + 1); }
-  else if (event.key === "ArrowLeft") setStep(state.step - 1);
-  else if (event.key === "n" || event.key === "N") toggleNight();
-  else if (event.key === "v" || event.key === "V") toggleWind();
-});
-document.addEventListener("visibilitychange", run);
-const first = new URLSearchParams(location.search).get("paso");
-setStep(first ? Number(first) - 1 : 0);
 `;
 
 const CSS = `
-${b.BRICK_CSS}
-body{background:#eef3f7;font-family:ui-rounded,"SF Pro Rounded","Nunito",system-ui,sans-serif}
-.lb-lesson .iso-plate{overflow:hidden;background:#fbfdff;padding:44px 20px 40px;border-radius:18px;box-shadow:0 0 0 1px #d6dde4,0 12px 30px -12px #2b3a5a33}
-.lb-lesson .iso-plate-corners{z-index:2}
-.lb-lesson .iso-plate-corner{font-family:inherit;font-size:13px;letter-spacing:.02em;text-transform:none;transition:color .6s}
-.lb-lesson[data-night] .iso-plate-corner{color:#d9e1ff}
-.lb-piece{transition:transform .6s cubic-bezier(.34,1.56,.64,1) min(calc(var(--i) * 30ms), 1200ms),opacity .3s min(calc(var(--i) * 30ms), 1200ms)}
-.lb-piece[data-hidden]{opacity:0;transform:translateY(-34px);transition:none;pointer-events:none}
 .lb-wire{fill:none;stroke:#2a2f36;stroke-width:1.1}
 .lb-cable{fill:none;stroke:#141414;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
 .lb-plug{fill:#141414}
-.lb-night{fill:#14204f;mix-blend-mode:multiply;opacity:0;pointer-events:none}
-.lb-glow{mix-blend-mode:screen;opacity:0;pointer-events:none}
-.lb-stars circle{fill:#fff8d0}
-.lb-stars{opacity:0;pointer-events:none}
-.lb-sky{cursor:pointer}
-.lb-sun circle{fill:#ffd23a;stroke:#e8a400;stroke-width:1.5}
-.lb-sun path{stroke:#ffc21a;stroke-width:4;stroke-linecap:round}
-.lb-moon{opacity:0}
-.lb-moon path{fill:#f4f1d0;stroke:#c9c39a;stroke-width:1}
 [data-id="turbine"]{cursor:pointer}
 [data-part="blades"] path{fill:#f2f2ee;stroke:#77786f;stroke-width:.9;stroke-linejoin:round}
-[data-part="energy"]{pointer-events:none;filter:drop-shadow(0 0 3px #ffd84a)}
 [data-id="eye"][data-on] .lb path:not(.lb-edge):not(.lb-crease){fill:#7ff0ff}
-.lb-controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:18px 0 0}
-.lb-controls button{font:inherit;font-size:17px;padding:10px 18px;border-radius:12px;border:0;background:#fff;color:#1d2a3a;box-shadow:0 0 0 1px #cfd8e2,0 2px 0 #cfd8e2;cursor:pointer}
-.lb-controls button:hover:not(:disabled){background:#fff7d6}
-.lb-controls button:disabled{opacity:.4;cursor:default}
-.lb-controls [data-action="next"]{background:#ffd23a;box-shadow:0 0 0 1px #e1b100,0 2px 0 #e1b100;font-weight:700}
-.lb-controls .lb-spacer{flex:1}
-.lb-step{font-size:15px;color:#5b6878;min-width:96px;text-align:center}
-.lb-script{display:grid;gap:12px;margin-top:18px}
-.lb-say,.lb-ask{margin:0;padding:16px 20px;border-radius:14px;font-size:22px;line-height:1.4;color:#1d2a3a}
-.lb-say{background:#fff;box-shadow:0 0 0 1px #d6dde4}
-.lb-ask{background:#fff4c6;font-size:19px}
-.lb-say::before,.lb-ask::before{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#7a8696;margin-bottom:4px}
-.lb-say::before{content:"Dile"}
-.lb-ask::before{content:"Pregúntale"}
-.lb-parents{margin-top:6px;font-size:15px;line-height:1.55;color:#4f5c6b}
-.lb-parents summary{cursor:pointer;color:#2f5fa8}
-.lb-keys{margin-top:14px;font-size:13px;color:#7a8696}
-@media (prefers-reduced-motion:reduce){.lb-piece{transition:none}}
 `;
 
-const plate = k.plateHtml({
-  fig: "Paso 1 de 7",
+const html = l.lessonHtml({
   title: "¿Cómo llega la luz a la farola?",
-  hint: "",
-  readout: "",
-  body: svg,
+  svg,
+  steps: STEPS,
+  projection: P,
+  buttons: [
+    { action: "night", label: "🌙 Que sea de noche" },
+    { action: "wind", label: "✋ Parar el viento" },
+  ],
+  keys: "N noche · V viento · también puedes pulsar el sol o el molino",
+  script,
+  css: CSS,
 });
-const page = `<div class="lb-lesson">${plate}
-<div class="lb-controls">
-  <button data-action="prev">◀ Atrás</button>
-  <span class="lb-step" data-step-label>Paso 1 de 7</span>
-  <button data-action="next">Siguiente ▶</button>
-  <span class="lb-spacer"></span>
-  <button data-action="night">🌙 Que sea de noche</button>
-  <button data-action="wind">✋ Parar el viento</button>
-</div>
-<div class="lb-script">
-  <p class="lb-say" data-say></p>
-  <p class="lb-ask" data-ask></p>
-  <details class="lb-parents" open><summary>Para mamá o papá</summary><p data-note></p></details>
-</div>
-<p class="lb-keys">Teclado: ← → para cambiar de paso · N noche · V viento. También puedes pulsar el sol o el molino.</p>
-</div>`;
-
-const html = k.pageHtml({ title: "La farola", theme: "light", body: `<style>${CSS}</style>${page}`, script: kitScript() + live, width: 1040 }).replace('<html lang="en">', '<html lang="es">');
 mkdirSync(HERE, { recursive: true });
 writeFileSync(join(HERE, "farola.html"), html);
 console.log("wrote farola.html", `${(html.length / 1024).toFixed(0)} KB`, `${pieces.length} pieces`);
