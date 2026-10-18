@@ -6,6 +6,7 @@ import * as b from "../../kit/brick.mjs";
 import * as l from "../../kit/lesson.mjs";
 import * as fig from "../../kit/lego-figure.mjs";
 import { auditOrExit } from "../../kit/lego-audit.mjs";
+import * as fx from "../../kit/lego-fx.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const { STUD, PLATE } = b;
@@ -305,7 +306,8 @@ const down = lesson.route(${JSON.stringify(down)}, { token: "#w-clean", gap: 12,
 const main = lesson.route(${JSON.stringify(main)}, { token: "#w-clean", gap: 14, speed: 34 });
 const home = [${JSON.stringify(branch)}, ${JSON.stringify(riser)}].map((pts) => lesson.route(pts, { token: "#w-drop", gap: 7, speed: 30 }));
 const pour = lesson.route(${JSON.stringify(jet)}, { token: "#w-drop", gap: 5, speed: 60 });
-const state = { rain: true, open: false, rainy: 0, flow: 0, town: 0, bucket: 0 };
+const state = { rain: true, open: false, rainy: 0, flow: 0, town: 0, bucket: 0, drip: 0 };
+const RESERVOIR = ${JSON.stringify([RESERVOIR.x * STUD, RESERVOIR.y * STUD, (RESERVOIR.x + RESERVOIR.w) * STUD, DEEP * STUD])};
 
 const toggleRain = () => { if (lesson.step >= 1) state.rain = !state.rain; };
 const toggleTap = () => { if (lesson.step >= 5) state.open = !state.open; };
@@ -329,6 +331,13 @@ lesson.every((dt) => {
   state.flow = lesson.ease(state.flow, s >= 5 && state.open ? 1 : 0, dt, 0.25);
   if (state.flow > 0.5) state.bucket = Math.min(1, state.bucket + dt * 0.12);
   rain.forEach((route) => (route.level = state.rainy));
+  // The reservoir glints from the step it appears; rain rings its surface where drops land.
+  lesson.fx.level("reservoir", s >= 1 ? 1 : 0);
+  state.drip += dt * state.rainy * 5;
+  while (state.drip > 1) {
+    state.drip -= 1;
+    lesson.fx.ripple("reservoir", RESERVOIR[0] + 6 + Math.random() * (RESERVOIR[2] - RESERVOIR[0] - 12), RESERVOIR[1] + 6 + Math.random() * (RESERVOIR[3] - RESERVOIR[1] - 12));
+  }
   stream.level = Math.max(state.rainy, s >= 1 ? 0.35 : 0);
   muddy.level = state.town;
   clean.level = s >= 3 ? state.town : 0;
@@ -376,6 +385,7 @@ const html = l.lessonHtml({
     { action: "tap", label: "🚰 Abrir el grifo" },
   ],
   keys: "L lluvia · G grifo · también puedes pulsar la nube, el grifo o el cubo (para vaciarlo)",
+  fx: [fx.water({ id: "reservoir", rect: [RESERVOIR.x * STUD, RESERVOIR.y * STUD, (RESERVOIR.x + RESERVOIR.w) * STUD, DEEP * STUD], z: WATER_TOP + 0.1, occluders: [[DAM.x * STUD, DAM.y * STUD, 0, (DAM.x + DAM.w) * STUD, DEEP * STUD, 8 * PLATE]] })],
   script,
   css: CSS,
 });

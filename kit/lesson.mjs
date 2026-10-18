@@ -1,6 +1,7 @@
 import { cameraOf, figureSvg, iso, pageHtml, plateHtml } from "./iso-kit.mjs";
 import { BRICK_CSS, studSvg } from "./brick.mjs";
 import { kitScript } from "../scripts/inline-kit.mjs";
+import { FX_CSS, fxCamera, fxFragment, fxRuntime } from "./lego-fx.mjs";
 
 // A LEGO lesson: one scene that builds up step by step while a grown-up tells the story.
 // Each step is { say, ask, note, night }: what to say out loud, what to ask the child, a true
@@ -47,9 +48,11 @@ export function lessonSvg({ width, height, label, body }) {
 }
 
 // The page: the card, the step buttons, the lesson's own buttons, and the three texts.
-export function lessonHtml({ title, svg, steps, buttons = [], keys = "", projection, script = "", css = "" }) {
+// `fx` is an optional list of effects from lego-fx.mjs, drawn by WebGL over the SVG.
+export function lessonHtml({ title, svg, steps, buttons = [], keys = "", projection, script = "", css = "", fx = [] }) {
   const total = steps.length;
-  const plate = plateHtml({ fig: `Paso 1 de ${total}`, title, hint: "", readout: "", body: svg });
+  const stage = fx.length ? `<div class="lb-stage">${svg}<canvas class="lb-fx" aria-hidden="true"></canvas></div>` : svg;
+  const plate = plateHtml({ fig: `Paso 1 de ${total}`, title, hint: "", readout: "", body: stage });
   const extra = buttons.map((button) => `<button data-action="${escape(button.action)}">${escape(button.label)}</button>`).join("");
   const page = `<div class="lb-lesson">${plate}
 <div class="lb-controls">
@@ -65,8 +68,12 @@ export function lessonHtml({ title, svg, steps, buttons = [], keys = "", project
 </div>
 <p class="lb-keys">Teclado: ← → para cambiar de paso${keys ? ` · ${escape(keys)}` : ""}.</p>
 </div>`;
-  const runtime = `${kitScript()}\nconst lesson = (${lessonRuntime.toString()})(${JSON.stringify({ steps, projection })});\n${script}\nlesson.start();`;
-  return pageHtml({ title, theme: "light", body: `<style>${BRICK_CSS}${LESSON_CSS}${css}</style>${page}`, script: runtime, width: 1040 }).replace('<html lang="en">', '<html lang="es">');
+  const effects = fx.length
+    ? `const fxView = document.querySelector(".lb-lesson svg").viewBox.baseVal;
+lesson.fx = (${fxRuntime.toString()})({ canvas: document.querySelector(".lb-fx"), fragment: ${JSON.stringify(fxFragment(fx))}, view: [fxView.width, fxView.height], camera: ${JSON.stringify(fxCamera(projection))}, effects: ${JSON.stringify(fx)} }) ?? lesson.fx;\n`
+    : "";
+  const runtime = `${kitScript()}\nconst lesson = (${lessonRuntime.toString()})(${JSON.stringify({ steps, projection })});\n${effects}${script}\nlesson.start();`;
+  return pageHtml({ title, theme: "light", body: `<style>${BRICK_CSS}${LESSON_CSS}${fx.length ? FX_CSS : ""}${css}</style>${page}`, script: runtime, width: 1040 }).replace('<html lang="en">', '<html lang="es">');
 }
 
 // Runs in the page. It owns the steps, the sky and the frame loop, and moves tokens along routes.
@@ -113,6 +120,8 @@ function lessonRuntime({ steps, projection }) {
 
   const lesson = {
     step: 0,
+    // Effects from lego-fx.mjs; a stub when the lesson has none or the browser has no WebGL.
+    fx: { ready: false, level() {}, offset() {}, set() {}, ripple() {}, draw: () => false },
     night: false,
     dark: 0,
     ease: (from, to, dt, tau) => (still.matches ? to : from + (to - from) * (1 - Math.exp(-dt / tau))),
@@ -211,6 +220,7 @@ function lessonRuntime({ steps, projection }) {
       root.toggleAttribute("data-night", lesson.dark > 0.5);
     }
     for (const fn of frameFns) if (fn(dt, now)) moving = true;
+    if (lesson.fx.draw(now / 1000, dt)) moving = true;
     for (const route of routes) {
       if (route.level > 0.001) moving = true;
       route.offset = (route.offset + route.speed * route.level * dt) % route.gap;

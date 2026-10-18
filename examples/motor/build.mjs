@@ -8,6 +8,7 @@ import * as t from "../../kit/lego-tube.mjs";
 import * as l from "../../kit/lesson.mjs";
 import * as fig from "../../kit/lego-figure.mjs";
 import { auditOrExit } from "../../kit/lego-audit.mjs";
+import * as fx from "../../kit/lego-fx.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const { STUD, PLATE, GAP } = b;
@@ -316,15 +317,24 @@ lesson.every((dt) => {
     use.setAttribute("transform", tr([E[0] + u, E[1] + v, crown + 0.6 + w * (HEAD_Z - crown - 1.2)]));
   });
   state.flash = firing && phase === 2 && within < 0.12 ? 1 : Math.max(0, state.flash - dt * 4);
+  const burn = firing && phase === 2 ? Math.max(0, 1 - within * 0.75) : 0;
   spark.style.opacity = state.flash.toFixed(2);
-  boom.style.opacity = (firing && phase === 2 ? Math.max(0, 1 - within * 1.6) * 0.9 : 0).toFixed(2);
+  // With WebGL the burn is a real flame filling the chamber above the crown; without it, a glow.
+  boom.style.opacity = (lesson.fx.ready ? 0 : burn * 0.9).toFixed(2);
+  const ride = [state.x, 0, state.dz];
+  lesson.fx.level("burn", burn);
+  lesson.fx.set("burn", "low", crown);
+  lesson.fx.offset("burn", ride);
+  lesson.fx.offset("smoke", ride);
 
   // Flows outside the engine follow the strokes.
   const pulse = (on) => (on ? Math.sin(Math.PI * within) : 0);
   air.level = s >= 3 ? pulse(phase === 0) : 0;
   fuel.level = s >= 3 ? pulse(phase === 0) : 0;
   exhaust.level = s >= 5 ? pulse(phase === 3) : 0;
-  smoke.level = s >= 5 && state.omega > 0.2 ? Math.min(1, state.omega / 2) : 0;
+  const puffing = s >= 5 && state.omega > 0.2 ? Math.min(1, state.omega / 2) : 0;
+  smoke.level = lesson.fx.ready ? 0 : puffing;
+  lesson.fx.level("smoke", puffing);
   [air, fuel, exhaust, smoke].forEach((route) => { route.speed = route === smoke ? 18 : 30 + state.omega * 14; });
 
   // Off the stands, the kart drives: the wheels roll on the floor.
@@ -373,6 +383,21 @@ const html = l.lessonHtml({
     { action: "fast", label: "🦶 ¡Acelerar!" },
   ],
   keys: "A acelerar · M motor · también puedes pulsar el kart",
+  fx: [
+    fx.flame({
+      id: "burn",
+      at: E,
+      r: BORE - 0.6,
+      z0: HEAD_Z - 4,
+      z1: HEAD_Z - 0.2,
+      occluders: [
+        [E[0] - 13, E[1] - 13, HEAD_Z, E[0] + 13, E[1] + 13, HEAD_TOP],
+        [E[0] + 10, E[1] - 2, HEAD_Z - 0.4, E[0] + 26, E[1] + 2, HEAD_Z + 3.6],
+        [E[0] + 26, E[1] - 6.5, HEAD_Z + 1.6 - 6.5, E[0] + 40, E[1] + 6.5, HEAD_Z + 8.1],
+      ],
+    }),
+    fx.smoke({ id: "smoke", at: exhaustPath[exhaustPath.length - 1], drift: [-16, 3, 34] }),
+  ],
   script,
   css: CSS,
 });

@@ -888,6 +888,8 @@ const lesson = (function lessonRuntime({ steps, projection }) {
 
   const lesson = {
     step: 0,
+    // Effects from lego-fx.mjs; a stub when the lesson has none or the browser has no WebGL.
+    fx: { ready: false, level() {}, offset() {}, set() {}, ripple() {}, draw: () => false },
     night: false,
     dark: 0,
     ease: (from, to, dt, tau) => (still.matches ? to : from + (to - from) * (1 - Math.exp(-dt / tau))),
@@ -986,6 +988,7 @@ const lesson = (function lessonRuntime({ steps, projection }) {
       root.toggleAttribute("data-night", lesson.dark > 0.5);
     }
     for (const fn of frameFns) if (fn(dt, now)) moving = true;
+    if (lesson.fx.draw(now / 1000, dt)) moving = true;
     for (const route of routes) {
       if (route.level > 0.001) moving = true;
       route.offset = (route.offset + route.speed * route.level * dt) % route.gap;

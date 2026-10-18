@@ -14,6 +14,7 @@ Hay cuatro ejemplos completos. Abre el más parecido antes de empezar y cópialo
 - `examples/agua/`: «¿De dónde sale el agua del grifo?». Tuberías (`pipe`), piezas que cambian de color por el camino y la demanda del pueblo frente a la de la casa.
 - `examples/avion/`: «¿Por qué vuela un avión?». Un objeto que se mueve por la escena con su propio aire, que también se mueve con él. Usa piezas redondas (fuselaje, ruedas, cúpula), una manguera que solo aparece en un paso (`until`) y un modelo físico con un caso que falla a propósito (demasiado peso).
 
+- `examples/agua/` y `examples/motor/` usan además `lego-fx`: brillos y anillos de lluvia en el embalse, y una llama y humo de verdad en el motor.
 - `examples/motor/`: «¿Cómo funciona el motor de un coche?». Un mecanismo por dentro: un cilindro de cristal casi transparente, piezas vivas (pistón, biela, válvulas) movidas por un único ángulo, y una carga de piezas que se aprieta y cambia de color según el tiempo del motor. También un piloto sentado (`minifig({ legs: null, facing: "x" })`) y soportes que se retiran (`until`) para que el kart arranque.
 
 Cada uno se construye con `node examples/<nombre>/build.mjs`, que escribe la página junto al script. Con `--audit` pasa además la auditoría.
@@ -106,6 +107,18 @@ Cualquier pieza acepta `step`, el paso en que aparece; `until`, el último paso 
 
 Para que una excepción sea aceptable hay que declararla en la pieza: `overlaps: true` (un accesorio que se mete en otro; los tubos ya lo traen), `float: true` (una nube) u `offGrid: true` (un cubo suelto, un asa).
 
+### `kit/lego-fx.mjs`: efectos WebGL
+
+Efectos que se dibujan con WebGL sobre el SVG, en la misma cámara y en bandas de color planas, como las piezas. Se pasan a `lessonHtml({ fx: [...] })`. Sin WebGL el lienzo queda vacío y la lección sigue completa, así que deja siempre una versión SVG de lo importante y escóndela con `lesson.fx.ready`.
+
+| Función | Qué hace |
+|---|---|
+| `water({ id, rect, z, occluders })` | Agua en un rectángulo del suelo, en milímetros, con brillos que se mueven. `lesson.fx.ripple(id, x, y)` hace un anillo donde cae una gota. |
+| `flame({ id, at, r, z0, z1, occluders })` | Llama dentro de un cilindro vertical. `lesson.fx.set(id, "low", z)` mueve su suelo (la cabeza de un pistón). |
+| `smoke({ id, at, drift, size, occluders })` | Bocanadas de humo que salen de un punto y suben siguiendo `drift`. |
+
+En la página: `lesson.fx.level(id, 0..1)` enciende o apaga un efecto y `lesson.fx.offset(id, [x, y, z])` lo mueve con un grupo que se desplaza (el kart). **`occluders`** son las cajas `[x0, y0, z0, x1, y1, z1]` de las piezas que quedan delante del efecto: el lienzo va encima de todo el SVG, así que sin ellas el agua se pintaría encima de la presa. Pon siempre las que tapan el efecto y compruébalo en una captura.
+
 ### `kit/lesson.mjs`: la página
 
 | Función | Qué hace |
@@ -154,6 +167,7 @@ Lee cada PNG que generes:
 - **Cada paso**: `node scripts/capture.mjs "file://…/leccion.html?paso=N" --out pasoN.png --width 1200 --wait 4000`. ¿Está a la vista la pieza nueva de ese paso? ¿Se entiende sin leer?
 - **La interacción**: con `scripts/drive.mjs`, recorre los pasos con `["click", "[data-action=\"next\"]"]`, pulsa los botones propios y comprueba el `[data-readout]` con `["eval", …]`. Cada causa tiene que producir su efecto, y deshacerla tiene que deshacerlo. Volver atrás tiene que esconder las piezas de los pasos posteriores.
 - **De día y de noche**, si la lección usa el cielo.
+- **Con y sin WebGL**, si usa `lego-fx`: `capture.mjs` dibuja con WebGL, y `drive.mjs … --no-webgl` comprueba que la versión SVG se basta sola.
 - **La auditoría a cero**: `node build.mjs --audit` tiene que terminar en `auditoría superada`. Arregla la geometría; marca una excepción solo cuando de verdad lo sea.
 - La consola tiene que salir limpia (`console: clean`).
 - La prueba final: imagina que se lo cuentas a un niño de cuatro años. ¿Sabe dónde mirar en cada paso? ¿Reconoce cada cosa? ¿Puede contestar la pregunta mirando el dibujo?
